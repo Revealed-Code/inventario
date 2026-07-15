@@ -3,201 +3,1161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario - Centro de Acopio</title>
-    <!-- Tailwind CSS para un diseño limpio y moderno -->
+    <title>Centro de Acopio - Sistema de Control de Donativos</title>
+    <!-- Tailwind CSS para Diseño Profesional -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Iconos Modernos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        .font-mono-custom {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-4xl font-bold text-blue-800">Centro de Acopio</h1>
-            <p class="text-gray-600 mt-2">Control de Inventario en Tiempo Real</p>
-        </header>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-        <!-- Sección de Resumen y Tablas -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800">Inventario Disponible</h2>
-                <button onclick="cargarInventario()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
-                    🔄 Actualizar
+    <div id="app" class="flex-grow flex flex-col">
+        <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+        <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-md">
+                            <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold leading-none tracking-tight">CENTRO DE ACOPIO</h1>
+                            <p class="text-xs text-indigo-200">Control de Inventario Permanente</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Pestañas de Navegación -->
+                    <nav class="hidden md:flex space-x-2">
+                        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-indigo-800 text-white shadow-sm">
+                            <i class="fa-solid fa-chart-line mr-2"></i>Dashboard
+                        </button>
+                        <button onclick="switchTab('movimientos')" id="nav-movimientos" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-indigo-100 hover:bg-indigo-800/50">
+                            <i class="fa-solid fa-right-left mr-2"></i>Registrar Entrada/Salida
+                        </button>
+                        <button onclick="switchTab('productos')" id="nav-productos" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-indigo-100 hover:bg-indigo-800/50">
+                            <i class="fa-solid fa-barcode mr-2"></i>Catálogo de Códigos
+                        </button>
+                        <button onclick="switchTab('consultas')" id="nav-consultas" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-indigo-100 hover:bg-indigo-800/50">
+                            <i class="fa-solid fa-circle-question mr-2"></i>Consultas Rápidas
+                        </button>
+                    </nav>
+
+                    <!-- Indicador de Modo Administrador -->
+                    <div class="flex items-center space-x-3">
+                        <button onclick="toggleAdmin()" id="admin-indicator" class="flex items-center space-x-2 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition">
+                            <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" id="admin-dot"></span>
+                            <span id="admin-text" class="font-medium text-slate-300">Modo Lector</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Navegación Móvil (Pestañas Rápidas) -->
+            <div class="md:hidden bg-indigo-950 px-2 py-1 flex justify-around border-t border-indigo-800/40">
+                <button onclick="switchTab('dashboard')" id="nav-mob-dashboard" class="nav-mob-btn text-[10px] flex flex-col items-center py-1 text-white">
+                    <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>Panel
+                </button>
+                <button onclick="switchTab('movimientos')" id="nav-mob-movimientos" class="nav-mob-btn text-[10px] flex flex-col items-center py-1 text-indigo-300">
+                    <i class="fa-solid fa-right-left text-lg mb-0.5"></i>Registrar
+                </button>
+                <button onclick="switchTab('productos')" id="nav-mob-productos" class="nav-mob-btn text-[10px] flex flex-col items-center py-1 text-indigo-300">
+                    <i class="fa-solid fa-barcode text-lg mb-0.5"></i>Códigos
+                </button>
+                <button onclick="switchTab('consultas')" id="nav-mob-consultas" class="nav-mob-btn text-[10px] flex flex-col items-center py-1 text-indigo-300">
+                    <i class="fa-solid fa-circle-question text-lg mb-0.5"></i>Consultar
                 </button>
             </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Presentación</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entradas</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salidas</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-inventario" class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Cargando inventario...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <!-- 1. PESTAÑA: DASHBOARD (PANEL DE REPORTES) -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Tarjetas de Información Rápida (Kpis) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Total de Artículos Únicos</p>
+                            <h3 class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total-productos">0</h3>
+                        </div>
+                        <div class="bg-blue-50 text-blue-600 p-4 rounded-xl">
+                            <i class="fa-solid fa-boxes-stacked text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Entradas Registradas</p>
+                            <h3 class="text-3xl font-extrabold text-green-600 mt-1" id="kpi-total-entradas">0</h3>
+                        </div>
+                        <div class="bg-green-50 text-green-600 p-4 rounded-xl">
+                            <i class="fa-solid fa-circle-arrow-down text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Salidas Registradas</p>
+                            <h3 class="text-3xl font-extrabold text-amber-600 mt-1" id="kpi-total-salidas">0</h3>
+                        </div>
+                        <div class="bg-amber-50 text-amber-600 p-4 rounded-xl">
+                            <i class="fa-solid fa-circle-arrow-up text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Alertas de Sin Stock</p>
+                            <h3 class="text-3xl font-extrabold text-red-600 mt-1" id="kpi-alerta-stock">0</h3>
+                        </div>
+                        <div class="bg-red-50 text-red-600 p-4 rounded-xl">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Formularios de Operaciones -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Registrar Entrada -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-xl font-bold text-green-700 mb-4">📥 Registrar Entrada</h3>
-                <form id="form-entrada" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Código del Producto</label>
-                        <input type="text" id="ent-codigo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                <!-- Tabla Principal de Existencias Reales -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Estatus del Inventario en Tiempo Real</h2>
+                            <p class="text-sm text-slate-500 mt-0.5">Inventario real consolidado basado en todas las Entradas y Salidas en el servidor.</p>
+                        </div>
+                        
+                        <!-- Barra de Búsqueda y Filtros Dinámicos -->
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                                </span>
+                                <input type="text" id="search-inventory" oninput="renderInventory()" placeholder="Buscar código o nombre..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-64 bg-white">
+                            </div>
+                            <select id="filter-category" onchange="renderInventory()" class="border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="TODOS">Todas las Categorías</option>
+                                <option value="MEDICAMENTOS">MEDICAMENTOS</option>
+                                <option value="INSUMOS MEDICOS">INSUMOS MÉDICOS</option>
+                                <option value="ALIMENTOS">ALIMENTOS</option>
+                                <option value="BEBIDAS">BEBIDAS</option>
+                                <option value="HIGIENE PERSONAL">HIGIENE PERSONAL</option>
+                                <option value="RECREACION">RECREACIÓN</option>
+                                <option value="ANIMALES">ANIMALES</option>
+                                <option value="UTENSILIOS">UTENSILIOS</option>
+                                <option value="OTROS">OTROS</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Cantidad</label>
-                        <input type="number" id="ent-cantidad" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Donante</label>
-                        <input type="text" id="ent-donante" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Registrado Por</label>
-                        <input type="text" id="ent-responsable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                    </div>
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
-                        Guardar Entrada
-                    </button>
-                </form>
-            </div>
 
-            <!-- Registrar Salida -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-xl font-bold text-red-700 mb-4">📤 Registrar Salida</h3>
-                <form id="form-salida" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Código del Producto</label>
-                        <input type="text" id="sal-codigo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 border">
+                    <!-- Listado del Inventario -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="px-6 py-4">Código</th>
+                                    <th class="px-6 py-4">Nombre del Producto / Artículo</th>
+                                    <th class="px-6 py-4">Presentación</th>
+                                    <th class="px-6 py-4">Categoría</th>
+                                    <th class="px-6 py-4 text-center">Total Entradas</th>
+                                    <th class="px-6 py-4 text-center">Total Salidas</th>
+                                    <th class="px-6 py-4 text-center">Stock Disponible</th>
+                                    <th class="px-6 py-4 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Renderizado dinámico desde la API -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Cantidad</label>
-                        <input type="number" id="sal-cantidad" required min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 border">
+                </div>
+            </section>
+
+            <!-- 2. PESTAÑA: TRANSACCIONES (REGISTRO ENTRADA / SALIDA) -->
+            <section id="tab-movimientos" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Formulario de Entrada o Salida -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="mb-5">
+                            <h2 class="text-xl font-bold text-slate-900">Registrar Movimiento</h2>
+                            <p class="text-xs text-slate-500 mt-1">Ingresa los datos del formato en físico para digitalizar.</p>
+                        </div>
+
+                        <form id="form-movimiento" onsubmit="saveMovement(event)" class="space-y-4">
+                            <!-- Tipo de Movimiento -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tipo de Operación</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" onclick="setMovType('ENTRADA')" id="btn-type-entrada" class="py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-green-600 bg-green-50 text-green-700">
+                                        <i class="fa-solid fa-circle-arrow-down mr-2"></i>Entrada
+                                    </button>
+                                    <button type="button" onclick="setMovType('SALIDA')" id="btn-type-salida" class="py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-slate-200 text-slate-600 hover:bg-slate-50">
+                                        <i class="fa-solid fa-circle-arrow-up mr-2"></i>Salida
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Código de Producto Inteligente -->
+                            <div class="relative">
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Buscar Producto / Código</label>
+                                <input type="text" id="mov-search" oninput="filterMovProducts()" placeholder="Escribe código o nombre..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white" required>
+                                
+                                <!-- Lista Desplegable Dinámica -->
+                                <div id="mov-products-dropdown" class="hidden absolute left-0 right-0 z-50 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg mt-1 text-xs divide-y divide-slate-100 font-medium">
+                                    <!-- Opciones cargadas mediante JS -->
+                                </div>
+                                <input type="hidden" id="mov-codigo" required>
+                            </div>
+
+                            <!-- Campos bloqueados de autocompletado para seguridad -->
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-1">
+                                <p class="text-slate-500">Producto Seleccionado:</p>
+                                <p class="font-bold text-slate-800" id="selected-product-text">Ninguno - Por favor busca y selecciona uno arriba.</p>
+                                <p class="text-slate-600" id="selected-product-stock-lbl">Stock actual disponible: <span class="font-bold text-slate-900" id="selected-product-stock-val">0</span></p>
+                            </div>
+
+                            <!-- Fecha y Cantidad -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Fecha</label>
+                                    <input type="date" id="mov-fecha" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cantidad</label>
+                                    <input type="number" id="mov-cantidad" min="1" placeholder="Ej: 10" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                                </div>
+                            </div>
+
+                            <!-- Donante o Destinatario -->
+                            <div>
+                                <label id="label-contacto" class="block text-xs font-bold text-slate-600 uppercase mb-1">Donante (Origen)</label>
+                                <input type="text" id="mov-contacto" placeholder="Ej: Fundación Salud / Donante Anónimo" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                            </div>
+
+                            <!-- Registró o Autorizó -->
+                            <div>
+                                <label id="label-responsable" class="block text-xs font-bold text-slate-600 uppercase mb-1">Voluntario que Registró</label>
+                                <input type="text" id="mov-responsable" placeholder="Ingresa tu nombre" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                            </div>
+
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-md shadow-indigo-200">
+                                Guardar Registro en Base de Datos
+                            </button>
+                        </form>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Destinatario</label>
-                        <input type="text" id="sal-destinatario" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 border">
+
+                    <!-- Listado del Historial Reciente de Operaciones -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">Historial Reciente de Entradas y Salidas</h2>
+                                <p class="text-xs text-slate-500 mt-1">Últimos movimientos digitalizados en el sistema.</p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[500px]">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="px-4 py-3">Fecha</th>
+                                        <th class="px-4 py-3">Código</th>
+                                        <th class="px-4 py-3">Tipo</th>
+                                        <th class="px-4 py-3">Artículo / Nombre</th>
+                                        <th class="px-4 py-3 text-center">Cantidad</th>
+                                        <th class="px-4 py-3 text-left" id="th-contacto-header">Donante / Beneficiario</th>
+                                        <th class="px-4 py-3 text-left">Responsable</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Cargado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Autorizado Por</label>
-                        <input type="text" id="sal-responsable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 p-2 border">
+                </div>
+            </section>
+
+            <!-- 3. PESTAÑA: CATÁLOGO DE PRODUCTOS (AÑADIR NUEVO CÓDIGO) -->
+            <section id="tab-productos" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Registrar Nuevo Código -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="mb-5">
+                            <h2 class="text-xl font-bold text-slate-900">Agregar Nuevo Código</h2>
+                            <p class="text-xs text-slate-500 mt-1">Amplía el catálogo maestro agregando un nuevo artículo con su formato de código estricto.</p>
+                        </div>
+
+                        <!-- Bloqueador administrativo -->
+                        <div id="product-admin-lock" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs mb-4 flex items-start gap-3">
+                            <i class="fa-solid fa-lock text-base mt-0.5"></i>
+                            <div>
+                                <strong class="font-bold">Acceso Protegido:</strong>
+                                <p class="mt-0.5">Solo el Administrador del catálogo puede registrar o alterar códigos para evitar disparidades y duplicidades. Activa "Administrador" arriba para desbloquear.</p>
+                            </div>
+                        </div>
+
+                        <form id="form-producto" onsubmit="saveProduct(event)" class="space-y-4 hidden">
+                            <!-- Categoría -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Categoría del Artículo</label>
+                                <select id="prod-categoria" onchange="autoSuggestCode()" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                                    <option value="MEDICAMENTOS">MEDICAMENTOS</option>
+                                    <option value="INSUMOS MEDICOS">INSUMOS MÉDICOS</option>
+                                    <option value="ALIMENTOS">ALIMENTOS</option>
+                                    <option value="BEBIDAS">BEBIDAS</option>
+                                    <option value="HIGIENE PERSONAL">HIGIENE PERSONAL</option>
+                                    <option value="RECREACION">RECREACIÓN</option>
+                                    <option value="ANIMALES">ANIMALES</option>
+                                    <option value="UTENSILIOS">UTENSILIOS</option>
+                                    <option value="OTROS">OTROS</option>
+                                </select>
+                            </div>
+
+                            <!-- Código Automático / Manual -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Código Único (Automático)</label>
+                                <input type="text" id="prod-codigo" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-100 font-mono-custom font-bold" readonly required>
+                                <p class="text-[10px] text-slate-500 mt-1">El sistema sugiere el correlativo idóneo para evitar traslapes.</p>
+                            </div>
+
+                            <!-- Nombre del Producto -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nombre Genérico / Descripción</label>
+                                <input type="text" id="prod-nombre" placeholder="Ej: Acetaminofén o Algodón" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                            </div>
+
+                            <!-- Presentación -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Presentación / Empaque</label>
+                                <input type="text" id="prod-presentacion" placeholder="Ej: Blíster 10 tabletas / Rollo de 50m" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
+                            </div>
+
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-md shadow-indigo-200">
+                                Agregar Producto al Catálogo
+                            </button>
+                        </form>
                     </div>
-                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
-                        Guardar Salida
-                    </button>
-                </form>
+
+                    <!-- Catálogo Maestro Existente -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">Catálogo de Códigos Vigentes</h2>
+                                <p class="text-xs text-slate-500 mt-1">Todos los códigos maestros que se pueden utilizar para transacciones.</p>
+                            </div>
+                        </div>
+
+                        <!-- Buscador Interno de Códigos -->
+                        <div class="mb-4">
+                            <input type="text" id="search-catalogo" oninput="renderCatalogo()" placeholder="Filtrar catálogo..." class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[500px]">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3">Código</th>
+                                        <th class="px-6 py-3">Nombre</th>
+                                        <th class="px-6 py-3">Presentación</th>
+                                        <th class="px-6 py-3">Categoría</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="catalogo-table-body" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Cargado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PESTAÑA: CONSULTAS RÁPIDAS -->
+            <section id="tab-consultas" class="tab-content hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-900 mb-2">Consultas Ejecutivas Instantáneas</h2>
+                    <p class="text-sm text-slate-500 mb-6">Obtén de manera inmediata respuestas a preguntas frecuentes sobre el centro de acopio.</p>
+
+                    <!-- Caja de Preguntas Frecuentes -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <!-- Pregunta 1 -->
+                        <button onclick="runQuery('ALCOHOL')" class="p-4 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 border border-slate-200 rounded-2xl transition text-left group">
+                            <div class="bg-indigo-100 group-hover:bg-indigo-200 text-indigo-700 h-10 w-10 rounded-xl flex items-center justify-center mb-3 transition">
+                                <i class="fa-solid fa-bottle-droplet text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-950 text-sm">¿Cuánto Alcohol hay disponible?</h4>
+                            <p class="text-xs text-slate-500 mt-1">Busca el stock actual y las presentaciones de alcohol guardadas.</p>
+                        </button>
+
+                        <!-- Pregunta 2 -->
+                        <button onclick="runQuery('ACETAMINOFEN')" class="p-4 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 border border-slate-200 rounded-2xl transition text-left group">
+                            <div class="bg-indigo-100 group-hover:bg-indigo-200 text-indigo-700 h-10 w-10 rounded-xl flex items-center justify-center mb-3 transition">
+                                <i class="fa-solid fa-capsules text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-950 text-sm">¿Qué código tiene el Acetaminofén?</h4>
+                            <p class="text-xs text-slate-500 mt-1">Encuentra los códigos de este medicamento de forma ágil.</p>
+                        </button>
+
+                        <!-- Pregunta 3 -->
+                        <button onclick="runQuery('DONACION_ALCOHOL')" class="p-4 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 border border-slate-200 rounded-2xl transition text-left group">
+                            <div class="bg-indigo-100 group-hover:bg-indigo-200 text-indigo-700 h-10 w-10 rounded-xl flex items-center justify-center mb-3 transition">
+                                <i class="fa-solid fa-hand-holding-heart text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-950 text-sm">¿A quién se ha donado Alcohol?</h4>
+                            <p class="text-xs text-slate-500 mt-1">Muestra los beneficiarios y cantidades de salida del alcohol.</p>
+                        </button>
+
+                        <!-- Pregunta 4 -->
+                        <button onclick="runQuery('RESUMEN_CENTRO')" class="p-4 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 border border-slate-200 rounded-2xl transition text-left group">
+                            <div class="bg-indigo-100 group-hover:bg-indigo-200 text-indigo-700 h-10 w-10 rounded-xl flex items-center justify-center mb-3 transition">
+                                <i class="fa-solid fa-clipboard-list text-lg"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-950 text-sm">¿Qué hay ahora mismo en el acopio?</h4>
+                            <p class="text-xs text-slate-500 mt-1">Genera un resumen listo para copiar del inventario actual.</p>
+                        </button>
+                    </div>
+
+                    <!-- Contenedor del Reporte de Consulta -->
+                    <div id="query-result-container" class="hidden bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-indigo-600 h-3 w-3 rounded-full"></span>
+                                <h3 class="font-bold text-slate-900" id="query-title">Resultado de Consulta</h3>
+                            </div>
+                            <button onclick="copyQueryResult()" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> Copiar Reporte
+                            </button>
+                        </div>
+                        <div id="query-content" class="text-sm text-slate-700 space-y-4">
+                            <!-- Inyección dinámica de respuestas estructuradas -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- PIE DE PAGINA -->
+        <footer class="bg-slate-900 text-slate-400 py-6 text-xs border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+                <p class="font-semibold text-slate-300">CENTRO DE ACOPIO - CONTROLADOR DIGITAL DE INVENTARIOS V3</p>
+                <p>Usa esta aplicación en tu tablet o móvil. Datos sincronizados con base de datos remota en Supabase.</p>
+            </div>
+        </footer>
+
+        <!-- MODAL: HISTORIAL DEL ARTÍCULO -->
+        <div id="modal-historial" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-100">
+                <div class="bg-indigo-900 text-white p-5 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold leading-none" id="modal-product-title">Historial de Producto</h3>
+                        <p class="text-xs text-indigo-200 mt-1" id="modal-product-code">Código: </p>
+                    </div>
+                    <button onclick="closeHistorialModal()" class="text-indigo-200 hover:text-white transition text-xl font-bold">✕</button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                            <p class="text-xs text-slate-500 font-medium">Entradas</p>
+                            <h4 class="text-lg font-bold text-green-600 mt-0.5" id="modal-sum-entradas">0</h4>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                            <p class="text-xs text-slate-500 font-medium">Salidas</p>
+                            <h4 class="text-lg font-bold text-amber-600 mt-0.5" id="modal-sum-salidas">0</h4>
+                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                            <p class="text-xs text-slate-500 font-medium">Stock Real</p>
+                            <h4 class="text-lg font-bold text-blue-600 mt-0.5" id="modal-sum-stock">0</h4>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-4">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Movimientos Registrados</h4>
+                        <div class="max-h-60 overflow-y-auto space-y-2 pr-1" id="modal-movements-list">
+                            <!-- Inyección dinámica de filas de movimientos -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Script de Integración con el Backend -->
+    <!-- SCRIPT PRINCIPAL: BASE DE DATOS REAL (API INTEGRATION) -->
     <script>
-        // Apunta automáticamente a la misma URL pública donde se hospeda el backend
+        // --- CONFIGURACIÓN DE CONEXIÓN CON BACKEND FASTAPI ---
+        // Apunta automáticamente a la misma URL pública del servidor en Render (o localhost si estás en local)
         const API_URL = window.location.origin + "/api";
 
-        async function cargarInventario() {
-            try {
-                const response = await fetch(`${API_URL}/inventario`);
-                const data = await response.json();
-                const tbody = document.getElementById('tabla-inventario');
-                tbody.innerHTML = '';
+        // ESTADO DE LA APLICACIÓN (Se carga en tiempo real desde el Backend)
+        let state = {
+            productos: [],
+            movimientos: [],
+            inventario: [], // Existencias consolidadas del servidor
+            adminMode: false,
+            currentMovType: 'ENTRADA'
+        };
 
-                if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No hay productos registrados.</td></tr>`;
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Establecer fecha de hoy en el formulario de movimientos
+            document.getElementById('mov-fecha').value = new Date().toISOString().split('T')[0];
+            
+            // Cargar todos los datos desde el servidor en Render
+            await fetchData();
+            autoSuggestCode();
+        });
+
+        // --- FETCH CENTRALIZADO ---
+        async function fetchData() {
+            try {
+                // 1. Obtener Inventario consolidado
+                const resInv = await fetch(`${API_URL}/inventario`);
+                state.inventario = await resInv.json();
+
+                // 2. Extraer catálogo de productos a partir del inventario disponible
+                // (Mantenemos la estructura para búsquedas en formularios)
+                state.productos = state.inventario.map(item => ({
+                    codigo: item.codigo,
+                    nombre: item.nombre,
+                    presentacion: item.presentacion,
+                    categoria: item.categoria
+                }));
+
+                // 3. Obtener Historial total de movimientos desde la API
+                const resMovs = await fetch(`${API_URL}/movimientos`);
+                if (resMovs.ok) {
+                    state.movimientos = await resMovs.json();
+                } else {
+                    state.movimientos = [];
+                }
+
+                // Actualizar todas las pantallas e indicadores
+                updateKpis();
+                renderInventory();
+                renderHistory();
+                renderCatalogo();
+            } catch (err) {
+                console.error("Error conectando al backend:", err);
+            }
+        }
+
+        // --- SISTEMA DE PESTAÑAS (TABS) ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-indigo-100 hover:bg-indigo-800/50";
+            });
+            document.querySelectorAll('.nav-mob-btn').forEach(btn => {
+                btn.className = "nav-mob-btn text-[10px] flex flex-col items-center py-1 text-indigo-300";
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "nav-btn px-4 py-2 rounded-lg text-sm font-medium transition bg-indigo-800 text-white shadow-sm";
+            }
+            const activeMobBtn = document.getElementById(`nav-mob-${tabId}`);
+            if (activeMobBtn) {
+                activeMobBtn.className = "nav-mob-btn text-[10px] flex flex-col items-center py-1 text-white";
+            }
+        }
+
+        // --- SISTEMA DE ADMINISTRADOR (LOCK) ---
+        function toggleAdmin() {
+            state.adminMode = !state.adminMode;
+            const dot = document.getElementById('admin-dot');
+            const text = document.getElementById('admin-text');
+            const lockPanel = document.getElementById('product-admin-lock');
+            const productForm = document.getElementById('form-producto');
+
+            if (state.adminMode) {
+                dot.className = "h-2 w-2 rounded-full bg-emerald-500 animate-pulse";
+                text.innerText = "Modo Administrador";
+                text.className = "font-bold text-emerald-400";
+                if (lockPanel) lockPanel.classList.add('hidden');
+                if (productForm) productForm.classList.remove('hidden');
+            } else {
+                dot.className = "h-2 w-2 rounded-full bg-amber-500 animate-pulse";
+                text.innerText = "Modo Lector";
+                text.className = "font-medium text-slate-300";
+                if (lockPanel) lockPanel.classList.remove('hidden');
+                if (productForm) productForm.classList.add('hidden');
+            }
+            renderInventory();
+            renderCatalogo();
+        }
+
+        // --- ACTUALIZACIÓN DE KPIS EN EL DASHBOARD ---
+        function updateKpis() {
+            let totalUnicos = state.productos.length;
+            let totalEntradasCount = state.movimientos.filter(m => m.tipo === 'ENTRADA').length;
+            let totalSalidasCount = state.movimientos.filter(m => m.tipo === 'SALIDA').length;
+            
+            let sinStockCount = state.inventario.filter(item => item.stock_disponible <= 0).length;
+
+            document.getElementById('kpi-total-productos').innerText = totalUnicos;
+            document.getElementById('kpi-total-entradas').innerText = totalEntradasCount;
+            document.getElementById('kpi-total-salidas').innerText = totalSalidasCount;
+            document.getElementById('kpi-alerta-stock').innerText = sinStockCount;
+        }
+
+        // --- TABLA: RENDERIZADO DEL INVENTARIO DEL DASHBOARD ---
+        function renderInventory() {
+            const search = document.getElementById('search-inventory').value.toLowerCase().trim();
+            const cat = document.getElementById('filter-category').value;
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            let filteredItems = state.inventario.filter(item => {
+                const matchesSearch = item.nombre.toLowerCase().includes(search) || item.codigo.toLowerCase().includes(search);
+                const matchesCat = cat === 'TODOS' || item.categoria === cat;
+                return matchesSearch && matchesCat;
+            });
+
+            // Ordenar por código
+            filteredItems.sort((a,b) => a.codigo.localeCompare(b.codigo));
+
+            if (filteredItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-medium">Ningún artículo coincide con los filtros aplicados.</td></tr>`;
+                return;
+            }
+
+            filteredItems.forEach(item => {
+                const stockStyle = item.stock_disponible <= 0 
+                    ? 'text-red-700 bg-red-50 font-bold' 
+                    : item.stock_disponible <= 5 
+                        ? 'text-amber-700 bg-amber-50 font-bold' 
+                        : 'text-emerald-700 bg-emerald-50 font-semibold';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="px-6 py-3 font-mono-custom font-bold text-indigo-700">${item.codigo}</td>
+                        <td class="px-6 py-3 font-semibold text-slate-900">${item.nombre}</td>
+                        <td class="px-6 py-3 text-slate-500 font-medium">${item.presentacion || '-'}</td>
+                        <td class="px-6 py-3">
+                            <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-indigo-50 text-indigo-800 border border-indigo-100">${item.categoria}</span>
+                        </td>
+                        <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_entradas}</td>
+                        <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_salidas}</td>
+                        <td class="px-6 py-3 text-center">
+                            <span class="px-3 py-1.5 rounded-lg inline-block min-w-[60px] text-center ${stockStyle}">
+                                ${item.stock_disponible}
+                            </span>
+                        </td>
+                        <td class="px-6 py-3 text-center">
+                            <button onclick="openHistorialModal('${item.codigo}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+                                <i class="fa-solid fa-clock-rotate-left"></i> Historial
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- SISTEMA DE MOVIMIENTOS: FORMULARIO Y SELECCIONADO ---
+        function setMovType(type) {
+            state.currentMovType = type;
+            const btnEntrada = document.getElementById('btn-type-entrada');
+            const btnSalida = document.getElementById('btn-type-salida');
+            const labelContacto = document.getElementById('label-contacto');
+            const labelResponsable = document.getElementById('label-responsable');
+
+            if (type === 'ENTRADA') {
+                btnEntrada.className = "py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-green-600 bg-green-50 text-green-700";
+                btnSalida.className = "py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-slate-200 text-slate-600 hover:bg-slate-50";
+                labelContacto.innerText = "Donante (Origen)";
+                labelResponsable.innerText = "Voluntario que Registró";
+                document.getElementById('mov-contacto').placeholder = "Ej: Fundación Solidaria / Donante Anónimo";
+            } else {
+                btnEntrada.className = "py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-slate-200 text-slate-600 hover:bg-slate-50";
+                btnSalida.className = "py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-amber-600 bg-amber-50 text-amber-700";
+                labelContacto.innerText = "Destinatario / Beneficiario (Destino)";
+                labelResponsable.innerText = "Voluntario que Autorizó";
+                document.getElementById('mov-contacto').placeholder = "Ej: Comunidad Sector 4 / Familia Pérez";
+            }
+            
+            const activeCode = document.getElementById('mov-codigo').value;
+            if (activeCode) {
+                selectMovProduct(activeCode);
+            }
+        }
+
+        // FILTRADO DE DROP-DOWN DE PRODUCTOS
+        function filterMovProducts() {
+            const query = document.getElementById('mov-search').value.toLowerCase().trim();
+            const dropdown = document.getElementById('mov-products-dropdown');
+            
+            if (query.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            const matched = state.productos.filter(p => p.nombre.toLowerCase().includes(query) || p.codigo.toLowerCase().includes(query));
+            
+            if (matched.length === 0) {
+                dropdown.innerHTML = `<div class="p-3 text-slate-400">Ningún código maestro coincide con "${query}"</div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = '';
+            matched.slice(0, 8).forEach(p => {
+                dropdown.innerHTML += `
+                    <div onclick="selectMovProduct('${p.codigo}')" class="p-2.5 hover:bg-indigo-50 cursor-pointer transition flex justify-between items-center">
+                        <div>
+                            <span class="font-mono-custom font-bold text-indigo-700">${p.codigo}</span> - 
+                            <span class="font-semibold text-slate-900">${p.nombre}</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5 rounded font-bold">${p.categoria}</span>
+                    </div>
+                `;
+            });
+            dropdown.classList.remove('hidden');
+        }
+
+        // SELECCIONAR PRODUCTO DE LA LISTA
+        function selectMovProduct(code) {
+            const p = state.productos.find(x => x.codigo === code);
+            const itemInv = state.inventario.find(item => item.codigo === code);
+            const currentStock = itemInv ? itemInv.stock_disponible : 0;
+
+            document.getElementById('mov-search').value = `${p.codigo} - ${p.nombre}`;
+            document.getElementById('mov-codigo').value = p.codigo;
+            document.getElementById('selected-product-text').innerText = `${p.codigo} | ${p.nombre} (${p.presentacion || '-'}) [${p.categoria}]`;
+            
+            const stockValEl = document.getElementById('selected-product-stock-val');
+            stockValEl.innerText = currentStock;
+            
+            if (currentStock <= 0) {
+                stockValEl.className = "font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded";
+            } else if (currentStock <= 5) {
+                stockValEl.className = "font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded";
+            } else {
+                stockValEl.className = "font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded";
+            }
+
+            document.getElementById('mov-products-dropdown').classList.add('hidden');
+        }
+
+        // FORMATEAR FECHA DE YYYY-MM-DD A DD/MM/YYYY PARA LA API
+        function formatInputDate(dateStr) {
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        // RE-FORMATEAR FECHA DE DD/MM/YYYY A YYYY-MM-DD PARA EL INPUT DATE
+        function formatOutputDate(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        // GUARDAR MOVIMIENTO REAL CONECTANDO AL BACKEND
+        async function saveMovement(event) {
+            event.preventDefault();
+            
+            const codigo = document.getElementById('mov-codigo').value;
+            const fechaRaw = document.getElementById('mov-fecha').value;
+            const fechaFormateada = formatInputDate(fechaRaw);
+            const cantidad = parseInt(document.getElementById('mov-cantidad').value);
+            const contacto = document.getElementById('mov-contacto').value.trim();
+            const responsable = document.getElementById('mov-responsable').value.trim();
+            const tipo = state.currentMovType;
+
+            if (!codigo) {
+                alert("Por favor selecciona un producto de la lista sugerida.");
+                return;
+            }
+
+            // Validar stock antes de una salida en el cliente
+            if (tipo === 'SALIDA') {
+                const itemInv = state.inventario.find(i => i.codigo === codigo);
+                const stockDisponible = itemInv ? itemInv.stock_disponible : 0;
+                
+                if (cantidad > stockDisponible) {
+                    alert(`¡ERROR DE INVENTARIO INSUFICIENTE!\n\nNo puedes autorizar esta salida porque solo quedan ${stockDisponible} unidades de este artículo.`);
+                    return;
+                }
+            }
+
+            // Payload exacto según tus esquemas de Pydantic en FastAPI
+            const payload = {
+                fecha: fechaFormateada,
+                codigo: codigo,
+                cantidad: cantidad,
+                persona_contacto: contacto,
+                responsable: responsable
+            };
+
+            const endpoint = tipo === 'ENTRADA' ? 'entradas' : 'salidas';
+
+            try {
+                const res = await fetch(`${API_URL}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("¡Movimiento guardado con éxito en la base de datos de Supabase!");
+                    document.getElementById('form-movimiento').reset();
+                    document.getElementById('mov-fecha').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('selected-product-text').innerText = 'Ninguno - Por favor busca y selecciona uno arriba.';
+                    document.getElementById('selected-product-stock-val').innerText = '0';
+                    document.getElementById('selected-product-stock-val').className = 'font-bold text-slate-900';
+                    
+                    // Recargar datos actualizados del servidor
+                    await fetchData();
+                } else {
+                    const errData = await res.json();
+                    alert("Error en el servidor: " + (errData.detail || "Error desconocido"));
+                }
+            } catch (err) {
+                alert("No se pudo conectar con el servidor. Verifica tu conexión.");
+                console.error(err);
+            }
+        }
+
+        // --- RENDERIZADO DEL HISTORIAL DE OPERACIONES ---
+        function renderHistory() {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+
+            if (state.movimientos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400 font-medium">No hay registros de movimientos en el servidor.</td></tr>`;
+                return;
+            }
+
+            state.movimientos.forEach((m) => {
+                const prod = state.productos.find(p => p.codigo === m.codigo) || { nombre: "Artículo no catalogado", presentacion: "" };
+                const badgeStyle = m.tipo === 'ENTRADA' 
+                    ? 'text-green-700 bg-green-50 border-green-100' 
+                    : 'text-amber-700 bg-amber-50 border-amber-100';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-4 py-2.5 font-medium text-slate-600">${m.fecha}</td>
+                        <td class="px-4 py-2.5 font-mono-custom font-bold text-indigo-700">${m.codigo}</td>
+                        <td class="px-4 py-2.5">
+                            <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${badgeStyle}">${m.tipo}</span>
+                        </td>
+                        <td class="px-4 py-2.5 font-semibold text-slate-900">${prod.nombre} <span class="text-[10px] font-normal text-slate-400">(${prod.presentacion || ''})</span></td>
+                        <td class="px-4 py-2.5 text-center font-bold text-slate-800">${m.cantidad}</td>
+                        <td class="px-4 py-2.5 text-slate-600">${m.persona_contacto || 'ANÓNIMO'}</td>
+                        <td class="px-4 py-2.5 text-slate-500 font-medium">${m.responsable || 'SISTEMA'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- SECCIÓN: CATÁLOGO DE PRODUCTOS ---
+        function renderCatalogo() {
+            const search = document.getElementById('search-catalogo').value.toLowerCase().trim();
+            const tbody = document.getElementById('catalogo-table-body');
+            tbody.innerHTML = '';
+
+            const filtered = state.productos.filter(p => p.nombre.toLowerCase().includes(search) || p.codigo.toLowerCase().includes(search) || p.categoria.toLowerCase().includes(search));
+            
+            // Ordenar por código
+            filtered.sort((a,b) => a.codigo.localeCompare(b.codigo));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 font-medium">Ningún producto registrado coincide.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-2.5 font-mono-custom font-bold text-indigo-700">${p.codigo}</td>
+                        <td class="px-6 py-2.5 font-semibold text-slate-900">${p.nombre}</td>
+                        <td class="px-6 py-2.5 text-slate-500 font-medium">${p.presentacion || '-'}</td>
+                        <td class="px-6 py-2.5">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 uppercase border border-slate-200">${p.categoria}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // AUTO-SUGERIR SIGUIENTE CÓDIGO CORRELATIVO SEGÚN LA CATEGORÍA
+        function autoSuggestCode() {
+            const cat = document.getElementById('prod-categoria').value;
+            let prefix = "OTROS";
+            
+            if (cat === "MEDICAMENTOS") prefix = "MED";
+            else if (cat === "INSUMOS MEDICOS") prefix = "IME";
+            else if (cat === "ALIMENTOS") prefix = "ALI";
+            else if (cat === "BEBIDAS") prefix = "BEB";
+            else if (cat === "HIGIENE PERSONAL") prefix = "HIG";
+            else if (cat === "RECREACION") prefix = "REC";
+            else if (cat === "ANIMALES") prefix = "ANI";
+            else if (cat === "UTENSILIOS") prefix = "UTE";
+            else prefix = "OTH";
+
+            const catProducts = state.productos.filter(p => p.codigo.startsWith(prefix + "-"));
+            let nextNum = 1;
+
+            if (catProducts.length > 0) {
+                const numbers = catProducts.map(p => {
+                    const parts = p.codigo.split('-');
+                    return parts.length > 1 ? parseInt(parts[1]) : 0;
+                }).filter(n => !isNaN(n));
+                
+                if (numbers.length > 0) {
+                    nextNum = Math.max(...numbers) + 1;
+                }
+            }
+
+            const formattedNum = String(nextNum).padStart(3, '0');
+            document.getElementById('prod-codigo').value = `${prefix}-${formattedNum}`;
+        }
+
+        // GUARDAR NUEVO PRODUCTO EN EL CATÁLOGO (Si la API lo soporta en un endpoint)
+        async function saveProduct(event) {
+            event.preventDefault();
+            if (!state.adminMode) return;
+
+            const codigo = document.getElementById('prod-codigo').value.trim().toUpperCase();
+            const nombre = document.getElementById('prod-nombre').value.trim();
+            const presentacion = document.getElementById('prod-presentacion').value.trim();
+            const categoria = document.getElementById('prod-categoria').value.trim().toUpperCase();
+
+            if (state.productos.some(p => p.codigo === codigo)) {
+                alert(`Error: El código ${codigo} ya existe.`);
+                return;
+            }
+
+            const payload = {
+                codigo: codigo,
+                nombre: nombre,
+                presentacion: presentacion,
+                categoria: categoria
+            };
+
+            try {
+                // Hacemos el POST al endpoint de productos
+                const res = await fetch(`${API_URL}/productos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert(`¡Código ${codigo} creado con éxito en Supabase!`);
+                    document.getElementById('prod-nombre').value = '';
+                    document.getElementById('prod-presentacion').value = '';
+                    await fetchData();
+                    autoSuggestCode();
+                } else {
+                    const errData = await res.json();
+                    alert("Error en el servidor: " + (errData.detail || "No se pudo añadir"));
+                }
+            } catch (err) {
+                alert("Error de conexión al guardar el producto.");
+                console.error(err);
+            }
+        }
+
+        // --- SISTEMA DE CONSULTAS RÁPIDAS (Usando los datos actualizados del Servidor) ---
+        function runQuery(queryType) {
+            const container = document.getElementById('query-result-container');
+            const titleEl = document.getElementById('query-title');
+            const contentEl = document.getElementById('query-content');
+            
+            container.classList.remove('hidden');
+            contentEl.innerHTML = '';
+
+            if (queryType === 'ALCOHOL') {
+                titleEl.innerText = "Estatus de Alcohol en Inventario";
+                const alcoholItems = state.inventario.filter(item => item.nombre.toLowerCase().includes('alcohol'));
+                
+                if (alcoholItems.length === 0) {
+                    contentEl.innerHTML = `<p class="text-slate-500 font-medium">No se registran productos 'Alcohol' en el catálogo.</p>`;
                     return;
                 }
 
-                data.forEach(prod => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prod.codigo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${prod.nombre}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${prod.presentacion || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${prod.categoria}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">${prod.total_entradas}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold">${prod.total_salidas}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${prod.stock_disponible > 0 ? 'text-gray-900' : 'text-red-500'}">${prod.stock_disponible}</td>
-                    `;
-                    tbody.appendChild(tr);
+                let listHtml = `<ul class="space-y-2">`;
+                alcoholItems.forEach(item => {
+                    listHtml += `
+                        <li class="p-3 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
+                            <div>
+                                <span class="font-mono-custom font-bold text-indigo-600">${item.codigo}</span> | 
+                                <strong class="text-slate-900">${item.nombre}</strong> 
+                                <span class="text-xs text-slate-500">(${item.presentacion || ''})</span>
+                            </div>
+                            <span class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold">Stock: ${item.stock_disponible}</span>
+                        </li>`;
                 });
-            } catch (error) {
-                console.error("Error cargando inventario:", error);
+                listHtml += `</ul>`;
+                contentEl.innerHTML = listHtml;
+
+            } else if (queryType === 'ACETAMINOFEN') {
+                titleEl.innerText = "Códigos para Acetaminofén";
+                const acetaminophenItems = state.productos.filter(p => p.nombre.toLowerCase().includes('acetaminofen') || p.nombre.toLowerCase().includes('acetaminofén'));
+                
+                if (acetaminophenItems.length === 0) {
+                    contentEl.innerHTML = `<p class="text-slate-500 font-medium">No se encontraron registros de Acetaminofén.</p>`;
+                    return;
+                }
+
+                let listHtml = `<ul class="space-y-2">`;
+                acetaminophenItems.forEach(p => {
+                    listHtml += `
+                        <li class="p-3 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
+                            <div>
+                                <strong class="text-slate-900">${p.nombre}</strong> - 
+                                <span class="text-xs text-slate-500">Presentación: ${p.presentacion || ''}</span>
+                            </div>
+                            <span class="font-mono-custom font-bold bg-indigo-600 text-white px-2.5 py-1 rounded-lg">${p.codigo}</span>
+                        </li>`;
+                });
+                listHtml += `</ul>`;
+                contentEl.innerHTML = listHtml;
+
+            } else if (queryType === 'DONACION_ALCOHOL') {
+                titleEl.innerText = "Historial de Salidas / Despachos de Alcohol";
+                const alcoholCodes = state.productos.filter(p => p.nombre.toLowerCase().includes('alcohol')).map(p => p.codigo);
+                const dispatches = state.movimientos.filter(m => m.tipo === 'SALIDA' && alcoholCodes.includes(m.codigo));
+
+                if (dispatches.length === 0) {
+                    contentEl.innerHTML = `<p class="text-slate-500 font-medium">No se han registrado salidas o donaciones de alcohol todavía.</p>`;
+                    return;
+                }
+
+                let listHtml = `<ul class="space-y-2">`;
+                dispatches.forEach(d => {
+                    const prod = state.productos.find(p => p.codigo === d.codigo);
+                    listHtml += `
+                        <li class="p-3 bg-white border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
+                            <div>
+                                <p class="font-bold text-slate-900">${prod.nombre} (${prod.presentacion || ''})</p>
+                                <p class="text-xs text-slate-500">Fecha: ${d.fecha} | Autorizado por: ${d.responsable || 'SISTEMA'}</p>
+                                <p class="text-xs text-indigo-700 font-bold mt-1">Donado a: ${d.persona_contacto || 'ANÓNIMO'}</p>
+                            </div>
+                            <span class="text-amber-600 bg-amber-50 border border-amber-100 font-bold px-3 py-1.5 rounded-lg text-sm">-${d.cantidad} unid</span>
+                        </li>`;
+                });
+                listHtml += `</ul>`;
+                contentEl.innerHTML = listHtml;
+
+            } else if (queryType === 'RESUMEN_CENTRO') {
+                titleEl.innerText = "Resumen de Existencias Actuales";
+                let categories = [...new Set(state.productos.map(p => p.categoria))];
+                let summaryHtml = `<div class="bg-white p-4 border border-slate-200 rounded-xl space-y-4 max-h-96 overflow-y-auto shadow-inner text-xs font-mono-custom">`;
+                
+                summaryHtml += `====================================<br>`;
+                summaryHtml += `  RESUMEN DE STOCK EN CENTRO ACOPIO <br>`;
+                summaryHtml += `====================================<br>`;
+
+                categories.forEach(cat => {
+                    const catItems = state.inventario.filter(item => item.categoria === cat && item.stock_disponible > 0);
+                    if (catItems.length > 0) {
+                        summaryHtml += `<br><strong>[CATEGORIA: ${cat}]</strong><br>`;
+                        catItems.forEach(item => {
+                            summaryHtml += `* ${item.codigo} | ${item.nombre.padEnd(25, ' ')} -> Stock: ${item.stock_disponible} (${item.presentacion || ''})<br>`;
+                        });
+                    }
+                });
+                
+                summaryHtml += `<br>====================================</div>`;
+                contentEl.innerHTML = summaryHtml;
             }
         }
 
-        function obtenerFechaActual() {
-            const d = new Date();
-            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        // COPIAR EL REPORTE GENERADO
+        function copyQueryResult() {
+            const el = document.getElementById('query-content');
+            let textToCopy = el.innerText;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert("¡El reporte ha sido copiado al portapapeles!");
+            }).catch(err => {
+                alert("No se pudo copiar: " + err);
+            });
         }
 
-        // Evento Registrar Entrada
-        document.getElementById('form-entrada').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                fecha: obtenerFechaActual(),
-                codigo: document.getElementById('ent-codigo').value,
-                cantidad: parseInt(document.getElementById('ent-cantidad').value),
-                persona_contacto: document.getElementById('ent-donante').value,
-                responsable: document.getElementById('ent-responsable').value
-            };
+        // --- SISTEMA DE MODAL: HISTORIAL POR PRODUCTO ---
+        function openHistorialModal(code) {
+            const modal = document.getElementById('modal-historial');
+            const p = state.productos.find(x => x.codigo === code);
+            const itemInv = state.inventario.find(i => i.codigo === code);
+            
+            if (!p || !itemInv) return;
 
-            const res = await fetch(`${API_URL}/entradas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            document.getElementById('modal-product-title').innerText = p.nombre;
+            document.getElementById('modal-product-code').innerText = `Código: ${p.codigo} | Presentación: ${p.presentacion || '-'} | Categoría: ${p.categoria}`;
 
-            if (res.ok) {
-                alert("Entrada registrada con éxito");
-                document.getElementById('form-entrada').reset();
-                cargarInventario();
+            document.getElementById('modal-sum-entradas').innerText = itemInv.total_entradas;
+            document.getElementById('modal-sum-salidas').innerText = itemInv.total_salidas;
+            document.getElementById('modal-sum-stock').innerText = itemInv.stock_disponible;
+
+            const listEl = document.getElementById('modal-movements-list');
+            listEl.innerHTML = '';
+
+            const productMovements = state.movimientos.filter(m => m.codigo === code);
+
+            if (productMovements.length === 0) {
+                listEl.innerHTML = `<p class="text-center py-4 text-xs text-slate-400 font-medium">No se registran movimientos.</p>`;
             } else {
-                const err = await res.json();
-                alert("Error: " + err.detail);
+                productMovements.forEach(m => {
+                    const badgeClass = m.tipo === 'ENTRADA' 
+                        ? 'text-green-700 bg-green-50 border-green-100' 
+                        : 'text-amber-700 bg-amber-50 border-amber-100';
+                    
+                    listEl.innerHTML += `
+                        <div class="p-3 border border-slate-100 rounded-xl bg-slate-50/50 text-xs flex justify-between items-center">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-1.5 py-0.5 rounded border font-bold text-[9px] uppercase ${badgeClass}">${m.tipo}</span>
+                                    <span class="font-semibold text-slate-700">${m.fecha}</span>
+                                </div>
+                                <p class="text-slate-500 mt-1">
+                                    ${m.tipo === 'ENTRADA' ? 'Donante: ' : 'Entregado a: '} <strong>${m.persona_contacto || 'ANÓNIMO'}</strong>
+                                </p>
+                                <p class="text-[10px] text-slate-400">Responsable: ${m.responsable || 'SISTEMA'}</p>
+                            </div>
+                            <div class="text-sm font-bold text-slate-900">
+                                ${m.tipo === 'ENTRADA' ? '+' : '-'}${m.cantidad}
+                            </div>
+                        </div>
+                    `;
+                });
             }
-        });
 
-        // Evento Registrar Salida
-        document.getElementById('form-salida').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                fecha: obtenerFechaActual(),
-                codigo: document.getElementById('sal-codigo').value,
-                cantidad: parseInt(document.getElementById('sal-cantidad').value),
-                persona_contacto: document.getElementById('sal-destinatario').value,
-                responsable: document.getElementById('sal-responsable').value
-            };
+            modal.classList.remove('hidden');
+        }
 
-            const res = await fetch(`${API_URL}/salidas`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                alert("Salida registrada con éxito");
-                document.getElementById('form-salida').reset();
-                cargarInventario();
-            } else {
-                const err = await res.json();
-                alert("Error: " + err.detail);
-            }
-        });
-
-        // Cargar datos al iniciar la página
-        window.onload = cargarInventario;
+        function closeHistorialModal() {
+            document.getElementById('modal-historial').classList.add('hidden');
+        }
     </script>
 </body>
 </html>
