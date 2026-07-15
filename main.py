@@ -1,12 +1,14 @@
 # main.py
 import os
-import sqlite3
+import urllib.parse
 from datetime import datetime
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, field_validator
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 app = FastAPI(title="Centro de Acopio")
 
@@ -18,16 +20,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Guardamos la base de datos en un volumen persistente de Railway o localmente
-DATABASE = "/data/inventario.db" if os.path.exists("/data") else "inventario.db"
+# --- CONFIGURACIÓN DE BASE DE DATOS (POSTGRESQL DESDE VARIABLE DE ENTORNO) ---
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+else:
+    DATABASE_URL = "sqlite:///./local_inventario.db"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    db = SessionLocal()
     try:
-        yield conn
+        yield db
     finally:
-        conn.close()
+        db.close()
 
 # --- DATOS DE INICIALIZACIÓN AUTOMÁTICA (TU EXCEL) ---
 PRODUCTOS_INICIALES = [
@@ -104,55 +114,52 @@ PRODUCTOS_INICIALES = [
     {"codigo": "MED-013", "nombre": "Metformina", "presentacion": "Cajas 500 mg", "categoria": "MEDICAMENTOS"}
 ]
 
-# Inicializar y autopoblar la base de datos si está vacía
+# Crear tablas y autopoblar si la base de datos de Postgres está vacía
 def init_db():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS productos (
-        codigo TEXT PRIMARY KEY,
-        nombre TEXT NOT NULL,
-        presentacion TEXT,
-        categoria TEXT NOT NULL
-    )
-    """)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS entradas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fecha TEXT NOT NULL,
-        codigo TEXT NOT NULL,
-        cantidad INTEGER NOT NULL,
-        donante TEXT,
-        registrado_por TEXT,
-        FOREIGN KEY (codigo) REFERENCES productos(codigo)
-    )
-    """)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS salidas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fecha TEXT NOT NULL,
-        codigo TEXT NOT NULL,
-        cantidad INTEGER NOT NULL,
-        destinatario TEXT,
-        autorizado_por TEXT,
-        FOREIGN KEY (codigo) REFERENCES productos(codigo)
-    )
-    """)
-    
-    # Comprobar si ya hay productos registrados
-    cursor.execute("SELECT COUNT(*) FROM productos")
-    if cursor.fetchone()[0] == 0:
-        for prod in PRODUCTOS_INICIALES:
-            cursor.execute(
-                "INSERT INTO productos (codigo, nombre, presentacion, categoria) VALUES (?, ?, ?, ?)",
-                (prod["codigo"], prod["nombre"], prod["presentacion"], prod["categoria"].upper())
-            )
+    with engine.connect() as conn:
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS productos (
+            codigo VARCHAR(50) PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            presentacion VARCHAR(100),
+            categoria VARCHAR(100) NOT NULL
+        )
+        """))
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS entradas (
+            id SERIAL PRIMARY KEY,
+            fecha VARCHAR(20) NOT NULL,
+            codigo VARCHAR(50) NOT NULL,
+            cantidad INTEGER NOT NULL,
+            donante VARCHAR(255),
+            registrado_por VARCHAR(255)
+        )
+        """))
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS salidas (
+            id SERIAL PRIMARY KEY,
+            fecha VARCHAR(20) NOT NULL,
+            codigo VARCHAR(50) NOT NULL,
+            cantidad INTEGER NOT NULL,
+            destinatario VARCHAR(255),
+            autorizado_por VARCHAR(255)
+        )
+        """))
         conn.commit()
-    conn.close()
+
+        # Autopoblar productos si la tabla está vacía
+        result = conn.execute(text("SELECT COUNT(*) FROM productos")).fetchone()
+        if result[0] == 0:
+            for prod in PRODUCTOS_INICIALES:
+                conn.execute(
+                    text("INSERT INTO productos (codigo, nombre, presentacion, categoria) VALUES (:codigo, :nombre, :presentacion, :categoria)"),
+                    {"codigo": prod["codigo"], "nombre": prod["nombre"], "presentacion": prod["presentacion"], "categoria": prod["categoria"].upper()}
+                )
+            conn.commit()
 
 init_db()
 
-# --- MODELOS DE DATOS ---
+# --- MODELOS DE VALIDACIÓN ---
 class ProductoBase(BaseModel):
     codigo: str
     nombre: str
@@ -179,63 +186,67 @@ class MovimientoBase(BaseModel):
 # --- ENDPOINTS API ---
 @app.get("/", response_class=HTMLResponse)
 def leer_interfaz():
-    # Lee y sirve el archivo index.html automáticamente al abrir la URL pública
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/api/productos", response_model=List[ProductoBase])
-def listar_productos(db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM productos ORDER BY codigo")
-    return [dict(row) for row in cursor.fetchall()]
-
-@app.post("/api/productos", response_model=ProductoBase)
-def crear_producto(producto: ProductoBase, db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
+    # Buscamos el archivo index.html en el servidor de Render
     try:
-        cursor.execute(
-            "INSERT INTO productos (codigo, nombre, presentacion, categoria) VALUES (?, ?, ?, ?)",
-            (producto.codigo, producto.nombre, producto.presentacion, producto.categoria)
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return """
+        <html>
+            <head><title>Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 100px;">
+                <h2>No se pudo cargar el archivo 'index.html'</h2>
+                <p>Verifica que el archivo index.html esté en la raíz de tu repositorio de GitHub junto a main.py.</p>
+            </body>
+        </html>
+        """
+
+@app.get("/api/productos")
+def listar_productos(db=Depends(get_db)):
+    result = db.execute(text("SELECT * FROM productos ORDER BY codigo")).fetchall()
+    return [dict(row._mapping) for row in result]
+
+@app.post("/api/productos")
+def crear_producto(producto: ProductoBase, db=Depends(get_db)):
+    try:
+        db.execute(
+            text("INSERT INTO productos (codigo, nombre, presentacion, categoria) VALUES (:codigo, :nombre, :presentacion, :categoria)"),
+            {"codigo": producto.codigo, "nombre": producto.nombre, "presentacion": producto.presentacion, "categoria": producto.categoria}
         )
         db.commit()
         return producto
-    except sqlite3.IntegrityError:
+    except Exception:
+        db.rollback()
         raise HTTPException(status_code=400, detail="El código de producto ya existe.")
 
 @app.post("/api/entradas")
-def registrar_entrada(mov: MovimientoBase, db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO entradas (fecha, codigo, cantidad, donante, registrado_por) VALUES (?, ?, ?, ?, ?)",
-        (mov.fecha, mov.codigo, mov.cantidad, mov.persona_contacto, mov.responsable)
+def registrar_entrada(mov: MovimientoBase, db=Depends(get_db)):
+    db.execute(
+        text("INSERT INTO entradas (fecha, codigo, cantidad, donante, registrado_por) VALUES (:fecha, :codigo, :cantidad, :donante, :registrado_por)"),
+        {"fecha": mov.fecha, "codigo": mov.codigo, "cantidad": mov.cantidad, "donante": mov.persona_contacto, "registrado_por": mov.responsable}
     )
     db.commit()
     return {"status": "ok"}
 
 @app.post("/api/salidas")
-def registrar_salida(mov: MovimientoBase, db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
-    # Calcular existencias reales de ese producto antes de despachar
-    cursor.execute("SELECT SUM(cantidad) FROM entradas WHERE codigo = ?", (mov.codigo,))
-    total_entradas = cursor.fetchone()[0] or 0
-    cursor.execute("SELECT SUM(cantidad) FROM salidas WHERE codigo = ?", (mov.codigo,))
-    total_salidas = cursor.fetchone()[0] or 0
+def registrar_salida(mov: MovimientoBase, db=Depends(get_db)):
+    total_entradas = db.execute(text("SELECT SUM(cantidad) FROM entradas WHERE codigo = :codigo"), {"codigo": mov.codigo}).fetchone()[0] or 0
+    total_salidas = db.execute(text("SELECT SUM(cantidad) FROM salidas WHERE codigo = :codigo"), {"codigo": mov.codigo}).fetchone()[0] or 0
     stock_actual = total_entradas - total_salidas
 
     if mov.cantidad > stock_actual:
         raise HTTPException(status_code=400, detail=f"Stock insuficiente. Disponible: {stock_actual}")
 
-    cursor.execute(
-        "INSERT INTO salidas (fecha, codigo, cantidad, destinatario, autorizado_por) VALUES (?, ?, ?, ?, ?)",
-        (mov.fecha, mov.codigo, mov.cantidad, mov.persona_contacto, mov.responsable)
+    db.execute(
+        text("INSERT INTO salidas (fecha, codigo, cantidad, destinatario, autorizado_por) VALUES (:fecha, :codigo, :cantidad, :destinatario, :autorizado_por)"),
+        {"fecha": mov.fecha, "codigo": mov.codigo, "cantidad": mov.cantidad, "destinatario": mov.persona_contacto, "autorizado_por": mov.responsable}
     )
     db.commit()
     return {"status": "ok"}
 
 @app.get("/api/inventario")
-def obtener_inventario(db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("""
+def obtener_inventario(db=Depends(get_db)):
+    query = text("""
         SELECT 
             p.codigo, p.nombre, p.presentacion, p.categoria,
             COALESCE(e.total_entradas, 0) as total_entradas,
@@ -250,17 +261,15 @@ def obtener_inventario(db: sqlite3.Connection = Depends(get_db)):
         ) s ON p.codigo = s.codigo
         ORDER BY p.codigo
     """)
-    return [dict(row) for row in cursor.fetchall()]
+    result = db.execute(query).fetchall()
+    return [dict(row._mapping) for row in result]
 
 @app.get("/api/historial/{codigo}")
-def historial_articulo(codigo: str, db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
+def historial_articulo(codigo: str, db=Depends(get_db)):
     codigo_upper = codigo.strip().upper()
-    cursor.execute("SELECT fecha, cantidad, donante as contacto, registrado_por as responsable, 'ENTRADA' as tipo FROM entradas WHERE codigo = ?", (codigo_upper,))
-    entradas = [dict(row) for row in cursor.fetchall()]
-    cursor.execute("SELECT fecha, cantidad, destinatario as contacto, autorizado_por as responsable, 'SALIDA' as tipo FROM salidas WHERE codigo = ?", (codigo_upper,))
-    salidas = [dict(row) for row in cursor.fetchall()]
+    entradas = db.execute(text("SELECT fecha, cantidad, donante as contacto, registrado_por as responsable, 'ENTRADA' as tipo FROM entradas WHERE codigo = :codigo"), {"codigo": codigo_upper}).fetchall()
+    salidas = db.execute(text("SELECT fecha, cantidad, destinatario as contacto, autorizado_por as responsable, 'SALIDA' as tipo FROM salidas WHERE codigo = :codigo"), {"codigo": codigo_upper}).fetchall()
     
-    movimientos = entradas + salidas
+    movimientos = [dict(row._mapping) for row in entradas] + [dict(row._mapping) for row in salidas]
     movimientos.sort(key=lambda x: x['fecha'], reverse=True)
     return movimientos
