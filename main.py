@@ -264,6 +264,37 @@ def obtener_inventario(db=Depends(get_db)):
     result = db.execute(query).fetchall()
     return [dict(row._mapping) for row in result]
 
+from fastapi import APIRouter, HTTPException
+# ... tus otros imports (supabase, db, etc.)
+
+@app.get("/api/movimientos")
+def obtener_movimientos():
+    try:
+        # 1. Traer todas las entradas de Supabase/Base de datos
+        entradas_res = supabase.table("entradas").select("*").execute()
+        entradas = entradas_res.data if hasattr(entradas_res, 'data') else entradas_res
+        
+        # 2. Traer todas las salidas
+        salidas_res = supabase.table("salidas").select("*").execute()
+        salidas = salidas_res.data if hasattr(salidas_res, 'data') else salidas_res
+        
+        # 3. Darles formato para que el frontend sepa cuál es cuál
+        for e in entradas:
+            e["tipo"] = "ENTRADA"
+        for s in salidas:
+            s["tipo"] = "SALIDA"
+            
+        # 4. Unir ambas listas
+        todos = entradas + salidas
+        
+        # 5. Ordenar por fecha (asumiendo formato DD/MM/YYYY o ISO)
+        # Nota: Si usas formato DD/MM/YYYY, puedes usar datetime para ordenar mejor
+        todos.sort(key=lambda x: x.get("id", 0)) # O por el campo 'fecha'
+        
+        return todos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/historial/{codigo}")
 def historial_articulo(codigo: str, db=Depends(get_db)):
     codigo_upper = codigo.strip().upper()
