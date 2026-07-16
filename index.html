@@ -506,8 +506,8 @@
     <!-- SCRIPT PRINCIPAL: BASE DE DATOS REAL (API INTEGRATION) -->
     <script>
         // --- CONFIGURACIÓN DE CONEXIÓN CON BACKEND FASTAPI ---
-        // Apunta automáticamente a la raíz pública del servidor en Render (sin el /api al final para evitar duplicaciones en las rutas del fetch)
-        const API_URL = "https://inventario-c3oy.onrender.com";
+        // Apunta automáticamente a la misma URL pública del servidor en Render (o localhost si estás en local)
+        const API_URL = "";
 
         // ESTADO DE LA APLICACIÓN (Se carga en tiempo real desde el Backend)
         let state = {
@@ -532,7 +532,7 @@
         async function fetchData() {
             try {
                 // 1. Obtener Inventario consolidado
-                const resInv = await fetch(`${API_URL}/api/inventario`);
+                const resInv = await fetch(`${API_URL}/inventario`);
                 state.inventario = await resInv.json();
 
                 // 2. Extraer catálogo de productos a partir del inventario disponible
@@ -545,7 +545,7 @@
                 }));
 
                 // 3. Obtener Historial total de movimientos desde la API
-                const resMovs = await fetch(`${API_URL}/api/movimientos`);
+                const resMovs = await fetch(`${API_URL}/movimientos`);
                 if (resMovs.ok) {
                     state.movimientos = await resMovs.json();
                 } else {
@@ -819,7 +819,7 @@
             const endpoint = tipo === 'ENTRADA' ? 'entradas' : 'salidas';
 
             try {
-                const res = await fetch(`${API_URL}/api/${endpoint}`, {
+                const res = await fetch(`${API_URL}/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -964,7 +964,7 @@
 
             try {
                 // Hacemos el POST al endpoint de productos
-                const res = await fetch(`${API_URL}/api/productos`, {
+                const res = await fetch(`${API_URL}/productos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
