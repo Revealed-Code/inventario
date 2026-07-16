@@ -532,7 +532,7 @@
         async function fetchData() {
             try {
                 // 1. Obtener Inventario consolidado
-                const resInv = await fetch(`${API_URL}/inventario`);
+                const resInv = await fetch(`${API_URL}/api/inventario`);
                 state.inventario = await resInv.json();
 
                 // 2. Extraer catálogo de productos a partir del inventario disponible
@@ -946,7 +946,8 @@
             if (!state.adminMode) return;
 
             const codigo = document.getElementById('prod-codigo').value.trim().toUpperCase();
-            const nombre = document.getElementById('prod-nombre').value.trim();
+            const fontName = document.getElementById('prod-nombre');
+            const nombre = fontName.value.trim();
             const presentacion = document.getElementById('prod-presentacion').value.trim();
             const categoria = document.getElementById('prod-categoria').value.trim().toUpperCase();
 
