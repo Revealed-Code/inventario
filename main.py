@@ -118,6 +118,10 @@ PRODUCTOS_INICIALES = [
 
 # Crear tablas y autopoblar si la base de datos está vacía
 def init_db():
+    # Detectamos si estamos usando SQLite para adaptar el autoincremental
+    is_sqlite = DATABASE_URL.startswith("sqlite")
+    serial_type = "INTEGER PRIMARY KEY AUTOINCREMENT" if is_sqlite else "SERIAL PRIMARY KEY"
+
     with engine.connect() as conn:
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS productos (
@@ -127,9 +131,9 @@ def init_db():
             categoria VARCHAR(100) NOT NULL
         )
         """))
-        conn.execute(text("""
+        conn.execute(text(f"""
         CREATE TABLE IF NOT EXISTS entradas (
-            id SERIAL PRIMARY KEY,
+            id {serial_type if not is_sqlite else 'INTEGER PRIMARY KEY AUTOINCREMENT'},
             fecha VARCHAR(20) NOT NULL,
             codigo VARCHAR(50) NOT NULL,
             cantidad INTEGER NOT NULL,
@@ -137,9 +141,9 @@ def init_db():
             registrado_por VARCHAR(255)
         )
         """))
-        conn.execute(text("""
+        conn.execute(text(f"""
         CREATE TABLE IF NOT EXISTS salidas (
-            id SERIAL PRIMARY KEY,
+            id {serial_type if not is_sqlite else 'INTEGER PRIMARY KEY AUTOINCREMENT'},
             fecha VARCHAR(20) NOT NULL,
             codigo VARCHAR(50) NOT NULL,
             cantidad INTEGER NOT NULL,
@@ -234,6 +238,33 @@ def registrar_salida(mov: MovimientoBase, db=Depends(get_db)):
     )
     db.commit()
     return {"status": "ok"}
+
+
+@app.get("/api/movimientos")
+def listar_todos_los_movimientos(db=Depends(get_db)):
+    # Traemos las entradas
+    entradas = db.execute(text("""
+        SELECT fecha, codigo, cantidad, donante as persona_contacto, registrado_por as responsable, 'ENTRADA' as tipo 
+        FROM entradas
+    """)).fetchall()
+    
+    # Traemos las salidas
+    salidas = db.execute(text("""
+        SELECT fecha, codigo, cantidad, destinatario as persona_contacto, autorizado_por as responsable, 'SALIDA' as tipo 
+        FROM salidas
+    """)).fetchall()
+    
+    # Unificamos ambas listas en una sola
+    todos = [dict(row._mapping) for row in entradas] + [dict(row._mapping) for row in salidas]
+    
+    # Los ordenamos por fecha (de más reciente a más antiguo)
+    # Nota: esto asume un formato de fecha ordenable (como YYYY-MM-DD).
+    try:
+        todos.sort(key=lambda x: x['fecha'], reverse=True)
+    except Exception:
+        pass
+        
+    return todos
 
 @app.get("/api/inventario")
 def obtener_inventario(db=Depends(get_db)):
