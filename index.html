@@ -545,7 +545,7 @@
                 }));
 
                 // 3. Obtener Historial total de movimientos desde la API
-                const resMovs = await fetch(`${API_URL}/api/v1/movimientos`);
+                const resMovs = await fetch(`${API_URL}/api/movimientos`);
                 if (resMovs.ok) {
                     state.movimientos = await resMovs.json();
                 } else {
