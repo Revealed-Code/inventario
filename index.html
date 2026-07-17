@@ -965,7 +965,7 @@
 
             try {
                 // Hacemos el POST al endpoint de productos
-                const res = await fetch(`${API_URL}/productos`, {
+                const res = await fetch(`${API_URL}/api/productos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
