@@ -915,6 +915,33 @@
             }
         }
 
+        async function deleteProduct(code) {
+    if (!state.adminMode) return;
+    
+    // Alerta de confirmación para evitar accidentes
+    const confirmar = confirm(`¿Estás completamente seguro de que deseas eliminar el producto ${code} del catálogo maestro?`);
+    if (!confirmar) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/productos/${code}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.ok) {
+            alert(`¡El producto ${code} ha sido removido exitosamente!`);
+            await fetchData(); // Refresca los datos en la pantalla
+        } else {
+            const errData = await res.json();
+            // Esto atrapará la regla del backend si el producto tiene historial activo
+            alert("Error: " + (errData.detail || "No se pudo eliminar el producto"));
+        }
+    } catch (err) {
+        alert("Ocurrió un error de red al intentar comunicarse con el servidor.");
+        console.error(err);
+    }
+}
+
         function runQuery(queryType) {
             const container = document.getElementById('query-result-container');
             const titleEl = document.getElementById('query-title');
