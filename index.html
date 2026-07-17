@@ -840,37 +840,46 @@
         }
 
         function autoSuggestCode() {
-            const cat = document.getElementById('prod-categoria').value;
-            let prefix = "OTROS";
-            
-            if (cat === "MEDICAMENTOS") prefix = "MED";
-            else if (cat === "INSUMOS MEDICOS") prefix = "IME";
-            else if (cat === "ALIMENTOS") prefix = "ALI";
-            else if (cat === "BEBIDAS") prefix = "BEB";
-            else if (cat === "HIGIENE PERSONAL") prefix = "HIG";
-            else if (cat === "RECREACION") prefix = "REC";
-            else if (cat === "ANIMALES") prefix = "ANI";
-            else if (cat === "UTENSILIOS") prefix = "UTE";
-            else prefix = "OTH";
+    const cat = document.getElementById('prod-categoria').value;
+    let prefix = "OTROS";
+    
+    if (cat === "MEDICAMENTOS") prefix = "MED";
+    else if (cat === "INSUMOS MEDICOS") prefix = "IME";
+    else if (cat === "ALIMENTOS") prefix = "ALI";
+    else if (cat === "BEBIDAS") prefix = "BEB";
+    else if (cat === "HIGIENE PERSONAL") prefix = "HIG";
+    else if (cat === "RECREACION") prefix = "REC";
+    else if (cat === "ANIMALES") prefix = "ANI";
+    else if (cat === "UTENSILIOS") prefix = "UTE";
+    else prefix = "OTH";
 
-            const catProducts = state.productos.filter(p => p.codigo.startsWith(prefix + "-"));
-            let nextNum = 1;
+    // 1. Filtrar los productos que pertenecen a este prefijo
+    const catProducts = state.productos.filter(p => p.codigo.startsWith(prefix + "-"));
+    let nextNum = 1;
 
-            if (catProducts.length > 0) {
-                const numbers = catProducts.map(p => {
-                    const parts = p.codigo.split('-');
-                    return parts.length > 1 ? parseInt(parts[1]) : 0;
-                }).filter(n => !isNaN(n));
-                
-                if (numbers.length > 0) {
-                    nextNum = Math.max(...numbers) + 1;
-                }
+    if (catProducts.length > 0) {
+        // 2. Extraer los números existentes y ordenarlos de menor a mayor
+        const numbers = catProducts.map(p => {
+            const parts = p.codigo.split('-');
+            return parts.length > 1 ? parseInt(parts[1], 10) : 0;
+        })
+        .filter(n => !isNaN(n) && n > 0)
+        .sort((a, b) => a - b); // Ordenar numéricamente
+
+        // 3. Buscar el primer hueco disponible comenzando desde el 1
+        for (let i = 0; i < numbers.length; i++) {
+            if (numbers[i] === nextNum) {
+                nextNum++; // El número está ocupado, pasamos al siguiente
+            } else if (numbers[i] > nextNum) {
+                break; // ¡Encontramos un hueco libre!
             }
-
-            const formattedNum = String(nextNum).padStart(3, '0');
-            document.getElementById('prod-codigo').value = `${prefix}-${formattedNum}`;
         }
+    }
 
+    // 4. Formatear con ceros a la izquierda (ej: 3 -> "003") y asignar al input
+    const formattedNum = String(nextNum).padStart(3, '0');
+    document.getElementById('prod-codigo').value = `${prefix}-${formattedNum}`;
+}
         async function saveProduct(event) {
             event.preventDefault();
             if (!state.adminMode) return;
