@@ -570,55 +570,63 @@
         }
 
         function renderInventory() {
-            const search = cleanString(document.getElementById('search-inventory').value.trim());
-            const cat = document.getElementById('filter-category').value;
-            const tbody = document.getElementById('inventory-table-body');
-            tbody.innerHTML = '';
+    const search = cleanString(document.getElementById('search-inventory').value.trim());
+    const cat = document.getElementById('filter-category').value;
+    const tbody = document.getElementById('inventory-table-body');
+    tbody.innerHTML = '';
 
-            let filteredItems = state.inventario.filter(item => {
-                const matchesSearch = cleanString(item.nombre).includes(search) || cleanString(item.codigo).includes(search);
-                const matchesCat = cat === 'TODOS' || item.categoria === cat;
-                return matchesSearch && matchesCat;
-            });
+    let filteredItems = state.inventario.filter(item => {
+        const matchesSearch = cleanString(item.nombre).includes(search) || cleanString(item.codigo).includes(search);
+        const matchesCat = cat === 'TODOS' || item.categoria === cat;
+        return matchesSearch && matchesCat;
+    });
 
-            filteredItems.sort((a,b) => a.codigo.localeCompare(b.codigo));
+    filteredItems.sort((a,b) => a.codigo.localeCompare(b.codigo));
 
-            if (filteredItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-medium">Ningún artículo coincide con los filtros aplicados.</td></tr>`;
-                return;
-            }
+    if (filteredItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-medium">Ningún artículo coincide con los filtros aplicados.</td></tr>`;
+        return;
+    }
 
-            filteredItems.forEach(item => {
-                const stockStyle = item.stock_disponible <= 0 
-                    ? 'text-red-700 bg-red-50 font-bold' 
-                    : item.stock_disponible <= 5 
-                        ? 'text-amber-700 bg-amber-50 font-bold' 
-                        : 'text-emerald-700 bg-emerald-50 font-semibold';
+    filteredItems.forEach(item => {
+        const stockStyle = item.stock_disponible <= 0 
+            ? 'text-red-700 bg-red-50 font-bold' 
+            : item.stock_disponible <= 5 
+                ? 'text-amber-700 bg-amber-50 font-bold' 
+                : 'text-emerald-700 bg-emerald-50 font-semibold';
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 transition">
-                        <td class="px-6 py-3 font-mono-custom font-bold text-indigo-700">${item.codigo}</td>
-                        <td class="px-6 py-3 font-semibold text-slate-900">${item.nombre}</td>
-                        <td class="px-6 py-3 text-slate-500 font-medium">${item.presentacion || '-'}</td>
-                        <td class="px-6 py-3">
-                            <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-indigo-50 text-indigo-800 border border-indigo-100">${item.categoria}</span>
-                        </td>
-                        <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_entradas}</td>
-                        <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_salidas}</td>
-                        <td class="px-6 py-3 text-center">
-                            <span class="px-3 py-1.5 rounded-lg inline-block min-w-[60px] text-center ${stockStyle}">
-                                ${item.stock_disponible}
-                            </span>
-                        </td>
-                        <td class="px-6 py-3 text-center">
-                            <button onclick="openHistorialModal('${item.codigo}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
-                                <i class="fa-solid fa-clock-rotate-left"></i> Historial
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
+        // CONDICIONAL: Si está en Modo Administrador, muestra el botón de eliminar
+        const deleteButtonHtml = state.adminMode 
+            ? `<button onclick="deleteProduct('${item.codigo}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1.5 rounded-lg transition inline-flex items-center gap-1 ml-1">
+                <i class="fa-solid fa-trash-can"></i>
+               </button>`
+            : '';
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50/50 transition">
+                <td class="px-6 py-3 font-mono-custom font-bold text-indigo-700">${item.codigo}</td>
+                <td class="px-6 py-3 font-semibold text-slate-900">${item.nombre}</td>
+                <td class="px-6 py-3 text-slate-500 font-medium">${item.presentacion || '-'}</td>
+                <td class="px-6 py-3">
+                    <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-indigo-50 text-indigo-800 border border-indigo-100">${item.categoria}</span>
+                </td>
+                <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_entradas}</td>
+                <td class="px-6 py-3 text-center text-slate-600 font-bold">${item.total_salidas}</td>
+                <td class="px-6 py-3 text-center">
+                    <span class="px-3 py-1.5 rounded-lg inline-block min-w-[60px] text-center ${stockStyle}">
+                        ${item.stock_disponible}
+                    </span>
+                </td>
+                <td class="px-6 py-3 text-center flex items-center justify-center gap-1">
+                    <button onclick="openHistorialModal('${item.codigo}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Historial
+                    </button>
+                    ${deleteButtonHtml}
+                </td>
+            </tr>
+        `;
+    });
+}
 
         function setMovType(type) {
             state.currentMovType = type;
