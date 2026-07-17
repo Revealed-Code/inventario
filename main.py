@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 
 app = FastAPI(title="Centro de Acopio")
 
@@ -21,11 +21,9 @@ app.add_middleware(
 )
 
 # --- CONFIGURACIÓN DE BASE DE DATOS (POSTGRESQL DESDE VARIABLE DE ENTORNO) ---
-# Si no hay variable de entorno, usará un SQLite temporal local para pruebas
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    # Solucionar el problema de compatibilidad de Render/Heroku con SQLAlchemy para postgres://
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 else:
@@ -41,7 +39,7 @@ def get_db():
     finally:
         db.close()
 
-# --- DATOS DE INICIALIZACIÓN AUTOMÁTICA (TU EXCEL) ---
+# --- DATOS DE INICIALIZACIÓN AUTOMÁTICA ---
 PRODUCTOS_INICIALES = [
     {"codigo": "MED-001", "nombre": "Solución", "presentacion": "unidades", "categoria": "MEDICAMENTOS"},
     {"codigo": "IME-001", "nombre": "Sondas", "presentacion": "unidades", "categoria": "INSUMOS MEDICOS"},
@@ -65,8 +63,8 @@ PRODUCTOS_INICIALES = [
     {"codigo": "MED-009", "nombre": "Agua oxigenada", "presentacion": "1000 cm3", "categoria": "MEDICAMENTOS"},
     {"codigo": "MED-010", "nombre": "Agua oxigenada", "presentacion": "galón", "categoria": "MEDICAMENTOS"},
     {"codigo": "IME-012", "nombre": "Adhesivo", "presentacion": "unidades", "categoria": "INSUMOS MEDICOS"},
-    {"codigo": "MED-011", "nombre": "Acetaminofen pediátrico", "presentacion": "unidades", "categoria": "MEDICAMENTOS"},
-    {"codigo": "MED-012", "nombre": "Acetaminofen", "presentacion": "unidades", "categoria": "MEDICAMENTOS"},
+    {"codigo": "MED-011", "nombre": "Acetaminofén pediátrico", "presentacion": "unidades", "categoria": "MEDICAMENTOS"},
+    {"codigo": "MED-012", "nombre": "Acetaminofén", "presentacion": "unidades", "categoria": "MEDICAMENTOS"},
     {"codigo": "IME-013", "nombre": "Tapabocas gris", "presentacion": "unidades", "categoria": "INSUMOS MEDICOS"},
     {"codigo": "IME-014", "nombre": "Tapabocas blanco", "presentacion": "unidades", "categoria": "INSUMOS MEDICOS"},
     {"codigo": "MED-014", "nombre": "Metformina", "presentacion": "Cajas 500 mg", "categoria": "MEDICAMENTOS"},
@@ -75,14 +73,14 @@ PRODUCTOS_INICIALES = [
     {"codigo": "MED-017", "nombre": "Olmesartán Medoxomil", "presentacion": "Caja 20 mg", "categoria": "MEDICAMENTOS"},
     {"codigo": "MED-018", "nombre": "Bisoprolol Fumarato", "presentacion": "Caja, 5 mg", "categoria": "MEDICAMENTOS"},
     {"codigo": "MED-019", "nombre": "Imazol", "presentacion": "Caja, 100 mg", "categoria": "MEDICAMENTOS"},
-    {"codigo": "MED-020", "nombre": "Candesartan", "presentacion": "Caja, 16 mg", "categoria": "MEDICAMENTOS"},
+    {"codigo": "MED-020", "nombre": "Candesartán", "presentacion": "Caja, 16 mg", "categoria": "MEDICAMENTOS"},
     {"codigo": "MED-021", "nombre": "Lodestar HCT", "presentacion": "Caja 50 mg ", "categoria": "MEDICAMENTOS"},
     {"codigo": "MED-022", "nombre": "Amlodipina", "presentacion": "Caja 5mg", "categoria": "MEDICAMENTOS"},
-    {"codigo": "MED.023", "nombre": "Febronol", "presentacion": "Caja Supositorios", "categoria": "MEDICAMENTOS"},
-    {"codigo": "MED 024", "nombre": "Clorfenamina", "presentacion": "Caja 4 mg", "categoria": "MEDICAMENTOS"},
+    {"codigo": "MED-023", "nombre": "Febronol", "presentacion": "Caja Supositorios", "categoria": "MEDICAMENTOS"},
+    {"codigo": "MED-024", "nombre": "Clorfenamina", "presentacion": "Caja 4 mg", "categoria": "MEDICAMENTOS"},
     {"codigo": "HIG-012", "nombre": "Repelente insectos", "presentacion": "Envase roll on", "categoria": "HIGIENE PERSONAL"},
     {"codigo": "MED-025", "nombre": "Romprazol", "presentacion": "10 mg", "categoria": "MEDICAMENTOS"},
-    {"codigo": "ALI-001", "nombre": "Harina de maiz", "presentacion": "1 k", "categoria": "ALIMENTOS"},
+    {"codigo": "ALI-001", "nombre": "Harina de maíz", "presentacion": "1 k", "categoria": "ALIMENTOS"},
     {"codigo": "ALI-002", "nombre": "Pasta", "presentacion": "1 k", "categoria": "ALIMENTOS"},
     {"codigo": "ALI-003", "nombre": "Arroz", "presentacion": "1 k", "categoria": "ALIMENTOS"},
     {"codigo": "ALI-004", "nombre": "Avena en hojuelas", "presentacion": "800 g", "categoria": "ALIMENTOS"},
@@ -92,7 +90,7 @@ PRODUCTOS_INICIALES = [
     {"codigo": "BEB-001", "nombre": "Bebida refrescante", "presentacion": "400 ML", "categoria": "BEBIDAS"},
     {"codigo": "ALI-008", "nombre": "Compotas", "presentacion": "186 gr", "categoria": "ALIMENTOS"},
     {"codigo": "ALI-009", "nombre": "Galletas dulces (tipo oreo)", "presentacion": "paquete", "categoria": "ALIMENTOS"},
-    {"codigo": "REC-001", "nombre": "Combo para colorear", "presentacion": "paquete pequeño", "categoria": "RECREACIÓN"},
+    {"codigo": "REC-001", "nombre": "Combo para colorear", "presentacion": "paquete pequeño", "categoria": "RECREACION"},
     {"codigo": "ALI-010", "nombre": "Aceite vegetal", "presentacion": "1 l", "categoria": "ALIMENTOS"},
     {"codigo": "HIG-001", "nombre": "Crema dental", "presentacion": "unidad 100g", "categoria": "HIGIENE PERSONAL"},
     {"codigo": "ALI-011", "nombre": "Azúcar", "presentacion": "1 k", "categoria": "ALIMENTOS"},
@@ -116,9 +114,7 @@ PRODUCTOS_INICIALES = [
     {"codigo": "MED-013", "nombre": "Metformina", "presentacion": "Cajas 500 mg", "categoria": "MEDICAMENTOS"}
 ]
 
-# Crear tablas y autopoblar si la base de datos está vacía
 def init_db():
-    # Detectamos si estamos usando SQLite para adaptar el autoincremental
     is_sqlite = DATABASE_URL.startswith("sqlite")
     serial_type = "INTEGER PRIMARY KEY AUTOINCREMENT" if is_sqlite else "SERIAL PRIMARY KEY"
 
@@ -133,7 +129,7 @@ def init_db():
         """))
         conn.execute(text(f"""
         CREATE TABLE IF NOT EXISTS entradas (
-            id {serial_type if not is_sqlite else 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+            id {serial_type},
             fecha VARCHAR(20) NOT NULL,
             codigo VARCHAR(50) NOT NULL,
             cantidad INTEGER NOT NULL,
@@ -143,7 +139,7 @@ def init_db():
         """))
         conn.execute(text(f"""
         CREATE TABLE IF NOT EXISTS salidas (
-            id {serial_type if not is_sqlite else 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+            id {serial_type},
             fecha VARCHAR(20) NOT NULL,
             codigo VARCHAR(50) NOT NULL,
             cantidad INTEGER NOT NULL,
@@ -153,7 +149,6 @@ def init_db():
         """))
         conn.commit()
 
-        # Autopoblar productos si la tabla está vacía
         result = conn.execute(text("SELECT COUNT(*) FROM productos")).fetchone()
         if result[0] == 0:
             for prod in PRODUCTOS_INICIALES:
@@ -212,7 +207,7 @@ def crear_producto(producto: ProductoBase, db=Depends(get_db)):
     except Exception:
         db.rollback()
         raise HTTPException(status_code=400, detail="El código de producto ya existe.")
-
+    
 @app.post("/api/entradas")
 def registrar_entrada(mov: MovimientoBase, db=Depends(get_db)):
     db.execute(
@@ -224,7 +219,6 @@ def registrar_entrada(mov: MovimientoBase, db=Depends(get_db)):
 
 @app.post("/api/salidas")
 def registrar_salida(mov: MovimientoBase, db=Depends(get_db)):
-    # Calcular existencias reales de ese producto antes de despachar
     total_entradas = db.execute(text("SELECT SUM(cantidad) FROM entradas WHERE codigo = :codigo"), {"codigo": mov.codigo}).fetchone()[0] or 0
     total_salidas = db.execute(text("SELECT SUM(cantidad) FROM salidas WHERE codigo = :codigo"), {"codigo": mov.codigo}).fetchone()[0] or 0
     stock_actual = total_entradas - total_salidas
@@ -239,26 +233,20 @@ def registrar_salida(mov: MovimientoBase, db=Depends(get_db)):
     db.commit()
     return {"status": "ok"}
 
-
 @app.get("/api/movimientos")
 def listar_todos_los_movimientos(db=Depends(get_db)):
-    # Traemos las entradas
     entradas = db.execute(text("""
         SELECT fecha, codigo, cantidad, donante as persona_contacto, registrado_por as responsable, 'ENTRADA' as tipo 
         FROM entradas
     """)).fetchall()
     
-    # Traemos las salidas
     salidas = db.execute(text("""
         SELECT fecha, codigo, cantidad, destinatario as persona_contacto, autorizado_por as responsable, 'SALIDA' as tipo 
         FROM salidas
     """)).fetchall()
     
-    # Unificamos ambas listas en una sola
     todos = [dict(row._mapping) for row in entradas] + [dict(row._mapping) for row in salidas]
     
-    # Los ordenamos por fecha (de más reciente a más antiguo)
-    # Nota: esto asume un formato de fecha ordenable (como YYYY-MM-DD).
     try:
         todos.sort(key=lambda x: x['fecha'], reverse=True)
     except Exception:
@@ -295,3 +283,26 @@ def historial_articulo(codigo: str, db=Depends(get_db)):
     movimientos = [dict(row._mapping) for row in entradas] + [dict(row._mapping) for row in salidas]
     movimientos.sort(key=lambda x: x['fecha'], reverse=True)
     return movimientos
+
+@app.delete("/api/productos/{codigo}")
+def eliminar_producto(codigo: str, db=Depends(get_db)):
+    codigo_upper = codigo.strip().upper()
+    
+    # Comprobar si existe el producto
+    producto = db.execute(text("SELECT codigo FROM productos WHERE codigo = :codigo"), {"codigo": codigo_upper}).fetchone()
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    # Comprobar movimientos asociados
+    en_entradas = db.execute(text("SELECT COUNT(*) FROM entradas WHERE codigo = :codigo"), {"codigo": codigo_upper}).fetchone()[0]
+    en_salidas = db.execute(text("SELECT COUNT(*) FROM salidas WHERE codigo = :codigo"), {"codigo": codigo_upper}).fetchone()[0]
+    
+    if en_entradas > 0 or en_salidas > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail="No se puede eliminar un producto que ya tiene entradas o salidas registradas."
+        )
+    
+    db.execute(text("DELETE FROM productos WHERE codigo = :codigo"), {"codigo": codigo_upper})
+    db.commit()
+    return {"message": f"Producto {codigo} eliminado exitosamente"}
