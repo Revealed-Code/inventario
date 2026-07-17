@@ -781,36 +781,43 @@
         }
 
         function renderHistory() {
-            const tbody = document.getElementById('history-table-body');
-            tbody.innerHTML = '';
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
 
-            if (state.movimientos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400 font-medium">No hay registros de movimientos.</td></tr>`;
-                return;
-            }
+    if (state.movimientos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400 font-medium">No hay registros de movimientos.</td></tr>`;
+        return;
+    }
 
-            state.movimientos.forEach((m) => {
-                const prod = state.productos.find(p => p.codigo === m.codigo) || { nombre: "Artículo no catalogado", presentacion: "" };
-                const badgeStyle = m.tipo === 'ENTRADA' 
-                    ? 'text-green-700 bg-green-50 border-green-100' 
-                    : 'text-amber-700 bg-amber-50 border-amber-100';
+    state.movimientos.forEach((m) => {
+        const prod = state.productos.find(p => p.codigo === m.codigo) || { nombre: "Artículo no catalogado", presentacion: "" };
+        const badgeStyle = m.tipo === 'ENTRADA' 
+            ? 'text-green-700 bg-green-50 border-green-100' 
+            : 'text-amber-700 bg-amber-50 border-amber-100';
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-4 py-2.5 font-medium text-slate-600">${m.fecha}</td>
-                        <td class="px-4 py-2.5 font-mono-custom font-bold text-indigo-700">${m.codigo}</td>
-                        <td class="px-4 py-2.5">
-                            <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${badgeStyle}">${m.tipo}</span>
-                        </td>
-                        <td class="px-4 py-2.5 font-semibold text-slate-900">${prod.nombre} <span class="text-[10px] font-normal text-slate-400">(${prod.presentacion || ''})</span></td>
-                        <td class="px-4 py-2.5 text-center font-bold text-slate-800">${m.cantidad}</td>
-                        <td class="px-4 py-2.5 text-slate-600">${m.persona_contacto || 'ANÓNIMO'}</td>
-                        <td class="px-4 py-2.5 text-slate-500 font-medium">${m.responsable || 'SISTEMA'}</td>
-                    </tr>
-                `;
-            });
-        }
+        // Determinamos el endpoint dinámicamente según el tipo para pasarlo a la función de eliminar
+        const endpointType = m.tipo === 'ENTRADA' ? 'entradas' : 'salidas';
 
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="px-4 py-2.5 font-medium text-slate-600">${m.fecha}</td>
+                <td class="px-4 py-2.5 font-mono-custom font-bold text-indigo-700">${m.codigo}</td>
+                <td class="px-4 py-2.5">
+                    <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${badgeStyle}">${m.tipo}</span>
+                </td>
+                <td class="px-4 py-2.5 font-semibold text-slate-900">${prod.nombre} <span class="text-[10px] font-normal text-slate-400">(${prod.presentacion || ''})</span></td>
+                <td class="px-4 py-2.5 text-center font-bold text-slate-800">${m.cantidad}</td>
+                <td class="px-4 py-2.5 text-slate-600">${m.persona_contacto || 'ANÓNIMO'}</td>
+                <td class="px-4 py-2.5 text-slate-500 font-medium">${m.responsable || 'SISTEMA'}</td>
+                <td class="px-4 py-2.5 text-center">
+                    <button onclick="deleteMovement('${endpointType}', ${m.id}, '${m.codigo}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2 py-1 rounded-md transition inline-flex items-center justify-center">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
         function renderCatalogo() {
             const search = cleanString(document.getElementById('search-catalogo').value.trim());
             const tbody = document.getElementById('catalogo-table-body');
