@@ -819,7 +819,7 @@
             const endpoint = tipo === 'ENTRADA' ? 'entradas' : 'salidas';
 
             try {
-                const res = await fetch(`${API_URL}/${endpoint}`, {
+                const res = await fetch(`${API_URL}/api/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
