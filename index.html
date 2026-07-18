@@ -517,8 +517,8 @@
             let sinStockCount = state.inventario.filter(item => item.stock_disponible <= 0).length;
 
             // SUMAR DIRECTAMENTE LOS TOTALES QUE YA TIENE CADA ITEM EN EL INVENTARIO
-             let totalEntradasCount = state.inventario.reduce((sum, item) => sum + (parseInt(item.total_entradas) || 0), 0);
-            let totalSalidasCount = state.inventario.reduce((sum, item) => sum + (parseInt(item.total_salidas) || 0), 0);
+            let totalEntradasCount = state.movimientos.filter(m => m.tipo === 'ENTRADA').length; //[cite: 1]
+            let totalSalidasCount = state.movimientos.filter(m => m.tipo === 'SALIDA').length; //[cite: 1]
 
              // Asignar los valores a los elementos HTML
              document.getElementById('kpi-total-productos').innerText = totalUnicos;
