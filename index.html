@@ -510,15 +510,18 @@
 
         function updateKpis() {
             let totalUnicos = state.productos.length;
-            let totalEntradasCount = state.movimientos.filter(m => m.tipo === 'ENTRADA').length;
-            let totalSalidasCount = state.movimientos.filter(m => m.tipo === 'SALIDA').length;
             let sinStockCount = state.inventario.filter(item => item.stock_disponible <= 0).length;
 
-            document.getElementById('kpi-total-productos').innerText = totalUnicos;
-            document.getElementById('kpi-total-entradas').innerText = totalEntradasCount;
-            document.getElementById('kpi-total-salidas').innerText = totalSalidasCount;
-            document.getElementById('kpi-alerta-stock').innerText = sinStockCount;
-        }
+            // SUMAR DIRECTAMENTE LOS TOTALES QUE YA TIENE CADA ITEM EN EL INVENTARIO
+             let totalEntradasCount = state.inventario.reduce((sum, item) => sum + (parseInt(item.total_entradas) || 0), 0);
+            let totalSalidasCount = state.inventario.reduce((sum, item) => sum + (parseInt(item.total_salidas) || 0), 0);
+
+             // Asignar los valores a los elementos HTML
+             document.getElementById('kpi-total-productos').innerText = totalUnicos;
+             document.getElementById('kpi-total-entradas').innerText = totalEntradasCount;
+             document.getElementById('kpi-total-salidas').innerText = totalSalidasCount;
+             document.getElementById('kpi-alerta-stock').innerText = sinStockCount;
+}
 
         // Función para limpiar acentos/diacríticos y hacer búsquedas más robustas
         function cleanString(str) {
