@@ -430,10 +430,14 @@
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('mov-fecha').value = new Date().toISOString().split('T')[0];
+            const inputFecha = document.getElementById('mov-fecha');
+            if (inputFecha) {
+            inputFecha.value = new Date().toISOString().split('T')[0];
+    }
+    
             await fetchData();
             autoSuggestCode();
-        });
+});
 
         async function fetchData() {
             try {
