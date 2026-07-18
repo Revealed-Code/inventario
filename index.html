@@ -188,102 +188,51 @@
             </section>
 
             <!-- 2. PESTAÑA: TRANSACCIONES -->
-            <section id="tab-movimientos" class="tab-content hidden space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="mb-5">
-                            <h2 class="text-xl font-bold text-slate-900">Registrar Movimiento</h2>
-                            <p class="text-xs text-slate-500 mt-1">Ingresa los datos del formato en físico para digitalizar.</p>
-                        </div>
+<!-- 2. PESTAÑA: TRANSACCIONES -->
+<section id="tab-movimientos" class="tab-content hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Aquí va el bloque del Formulario (lg:col-span-1) -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            ... (todo tu formulario original) ...
+        </div>
 
-                        <form id="form-movimiento" onsubmit="saveMovement(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tipo de Operación</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" onclick="setMovType('ENTRADA')" id="btn-type-entrada" class="py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-green-600 bg-green-50 text-green-700">
-                                        <i class="fa-solid fa-circle-arrow-down mr-2"></i>Entrada
-                                    </button>
-                                    <button type="button" onclick="setMovType('SALIDA')" id="btn-type-salida" class="py-2.5 rounded-xl border-2 font-bold text-sm transition text-center shadow-sm border-slate-200 text-slate-600 hover:bg-slate-50">
-                                        <i class="fa-solid fa-circle-arrow-up mr-2"></i>Salida
-                                    </button>
-                                </div>
-                            </div>
+        <!-- NUEVO BLOQUE DEL HISTORIAL OPTIMIZADO (lg:col-span-2) -->
+        <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Historial Reciente de Entradas y Salidas</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Últimos movimientos digitalizados en el sistema.</p>
+                </div>
+                <div class="relative w-full sm:w-64">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="search-history" oninput="renderHistory()" placeholder="Buscar en el historial..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                </div>
+            </div>
 
-                            <div class="relative">
-                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Buscar Producto / Código</label>
-                                <input type="text" id="mov-search" oninput="filterMovProducts()" placeholder="Escribe código o nombre..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50 focus:bg-white" required>
-                                
-                                <div id="mov-products-dropdown" class="hidden absolute left-0 right-0 z-50 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg mt-1 text-xs divide-y divide-slate-100 font-medium"></div>
-                                <input type="hidden" id="mov-codigo" required>
-                            </div>
+            <div class="overflow-x-auto max-h-[520px]">
+                <table class="w-full text-left border-collapse table-auto">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-2.5">Fecha</th>
+                            <th class="px-2 py-2.5">Código</th>
+                            <th class="px-2 py-2.5">Tipo</th>
+                            <th class="px-3 py-2.5">Artículo / Nombre</th>
+                            <th class="px-2 py-2.5 text-center">Cant.</th>
+                            <th class="px-3 py-2.5 text-left">Donante / Beneficiario</th>
+                            <th class="px-3 py-2.5 text-left">Responsable</th>
+                            <th class="px-2 py-2.5 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="divide-y divide-slate-100 text-[11px]"></tbody>
+                </table>
+            </div>
+        </div> <!-- <- Cierre de lg:col-span-2 -->
 
-                            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-1">
-                                <p class="text-slate-500">Producto Seleccionado:</p>
-                                <p class="font-bold text-slate-800" id="selected-product-text">Ninguno - Por favor busca y selecciona uno arriba.</p>
-                                <p class="text-slate-600" id="selected-product-stock-lbl">Stock actual disponible: <span class="font-bold text-slate-900" id="selected-product-stock-val">0</span></p>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Fecha</label>
-                                    <input type="date" id="mov-fecha" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cantidad</label>
-                                    <input type="number" id="mov-cantidad" min="1" placeholder="Ej: 10" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label id="label-contacto" class="block text-xs font-bold text-slate-600 uppercase mb-1">Donante (Origen)</label>
-                                <input type="text" id="mov-contacto" placeholder="Ej: Fundación Salud / Donante Anónimo" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
-                            </div>
-
-                            <div>
-                                <label id="label-responsable" class="block text-xs font-bold text-slate-600 uppercase mb-1">Voluntario que Registró</label>
-                                <input type="text" id="mov-responsable" placeholder="Ingresa tu nombre" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" required>
-                            </div>
-
-                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-md shadow-indigo-200">
-                                Guardar Registro en Base de Datos
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                            <div>
-                                <h2 class="text-lg font-bold text-slate-900">Historial Reciente de Entradas y Salidas</h2>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Últimos movimientos digitalizados en el sistema.</p>
-                            </div>
-                            <!-- NUEVO BUSCADOR DEL HISTORIAL -->
-                            <div class="relative w-full sm:w-64">
-                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                                </span>
-                                <input type="text" id="search-history" oninput="renderHistory()" placeholder="Buscar en el historial..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                            </div>
-                        </div>
-                    
-                        <!-- Contenedor optimizado sin scrolls incómodos si la pantalla ayuda -->
-                        <div class="overflow-x-auto max-h-[520px]">
-                            <table class="w-full text-left border-collapse table-auto">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                                        <th class="px-3 py-2.5">Fecha</th>
-                                        <th class="px-2 py-2.5">Código</th>
-                                        <th class="px-2 py-2.5">Tipo</th>
-                                        <th class="px-3 py-2.5">Artículo / Nombre</th>
-                                        <th class="px-2 py-2.5 text-center">Cant.</th>
-                                        <th class="px-3 py-2.5 text-left">Donante / Beneficiario</th>
-                                        <th class="px-3 py-2.5 text-left">Responsable</th>
-                                        <th class="px-2 py-2.5 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="history-table-body" class="divide-y divide-slate-100 text-[11px]"></tbody>
-                            </table>
-                        </div>
-                    </div>
+    </div> <!-- <- Cierre de la grid (MUY IMPORTANTE) -->
+</section> <!-- <- Cierre de la sección (MUY IMPORTANTE) -->
 
             <!-- 3. PESTAÑA: CATÁLOGO DE PRODUCTOS -->
             <section id="tab-productos" class="tab-content hidden space-y-6">
