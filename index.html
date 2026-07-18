@@ -250,33 +250,40 @@
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
                             <div>
-                                <h2 class="text-xl font-bold text-slate-900">Historial Reciente de Entradas y Salidas</h2>
-                                <p class="text-xs text-slate-500 mt-1">Últimos movimientos digitalizados en el sistema.</p>
+                                <h2 class="text-lg font-bold text-slate-900">Historial Reciente de Entradas y Salidas</h2>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Últimos movimientos digitalizados en el sistema.</p>
+                            </div>
+                            <!-- NUEVO BUSCADOR DEL HISTORIAL -->
+                            <div class="relative w-full sm:w-64">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                </span>
+                                <input type="text" id="search-history" oninput="renderHistory()" placeholder="Buscar en el historial..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
                             </div>
                         </div>
-
-                        <div class="overflow-x-auto max-h-[500px]">
-                            <table class="w-full text-left border-collapse">
+                    
+                        <!-- Contenedor optimizado sin scrolls incómodos si la pantalla ayuda -->
+                        <div class="overflow-x-auto max-h-[520px]">
+                            <table class="w-full text-left border-collapse table-auto">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                        <th class="px-4 py-3">Fecha</th>
-                                        <th class="px-4 py-3">Código</th>
-                                        <th class="px-4 py-3">Tipo</th>
-                                        <th class="px-4 py-3">Artículo / Nombre</th>
-                                        <th class="px-4 py-3 text-center">Cantidad</th>
-                                        <th class="px-4 py-3 text-left" id="th-contacto-header">Donante / Beneficiario</th>
-                                        <th class="px-4 py-3 text-left">Responsable</th>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="px-3 py-2.5">Fecha</th>
+                                        <th class="px-2 py-2.5">Código</th>
+                                        <th class="px-2 py-2.5">Tipo</th>
+                                        <th class="px-3 py-2.5">Artículo / Nombre</th>
+                                        <th class="px-2 py-2.5 text-center">Cant.</th>
+                                        <th class="px-3 py-2.5 text-left">Donante / Beneficiario</th>
+                                        <th class="px-3 py-2.5 text-left">Responsable</th>
+                                        <th class="px-2 py-2.5 text-center">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody id="history-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                                <tbody id="history-table-body" class="divide-y divide-slate-100 text-[11px]"></tbody>
                             </table>
                         </div>
                     </div>
-                </div>
-            </section>
 
             <!-- 3. PESTAÑA: CATÁLOGO DE PRODUCTOS -->
             <section id="tab-productos" class="tab-content hidden space-y-6">
@@ -782,6 +789,9 @@
 
         function renderHistory() {
     const tbody = document.getElementById('history-table-body');
+    const searchInput = document.getElementById('search-history');
+    const search = searchInput ? cleanString(searchInput.value.trim()) : '';
+    
     tbody.innerHTML = '';
 
     if (state.movimientos.length === 0) {
@@ -789,29 +799,48 @@
         return;
     }
 
-    state.movimientos.forEach((m) => {
+    // Filtrar movimientos según la búsqueda (Código, Nombre, Donante o Responsable)
+    let filteredMovs = state.movimientos.filter(m => {
+        const prod = state.productos.find(p => p.codigo === m.codigo) || { nombre: "" };
+        return cleanString(m.codigo).includes(search) || 
+               cleanString(prod.nombre).includes(search) || 
+               cleanString(m.persona_contacto || '').includes(search) || 
+               cleanString(m.responsable || '').includes(search);
+    });
+
+    if (filteredMovs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Ningún movimiento coincide con la búsqueda.</td></tr>`;
+        return;
+    }
+
+    filteredMovs.forEach((m) => {
         const prod = state.productos.find(p => p.codigo === m.codigo) || { nombre: "Artículo no catalogado", presentacion: "" };
         const badgeStyle = m.tipo === 'ENTRADA' 
             ? 'text-green-700 bg-green-50 border-green-100' 
             : 'text-amber-700 bg-amber-50 border-amber-100';
 
-        // Determinamos el endpoint dinámicamente según el tipo para pasarlo a la función de eliminar
         const endpointType = m.tipo === 'ENTRADA' ? 'entradas' : 'salidas';
 
         tbody.innerHTML += `
-            <tr class="hover:bg-slate-50 transition">
-                <td class="px-4 py-2.5 font-medium text-slate-600">${m.fecha}</td>
-                <td class="px-4 py-2.5 font-mono-custom font-bold text-indigo-700">${m.codigo}</td>
-                <td class="px-4 py-2.5">
-                    <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase ${badgeStyle}">${m.tipo}</span>
+            <tr class="hover:bg-slate-50/50 transition">
+                <td class="px-3 py-2 text-slate-600 font-medium whitespace-nowrap">${m.fecha}</td>
+                <td class="px-2 py-2 font-mono-custom font-bold text-indigo-700 whitespace-nowrap">${m.codigo}</td>
+                <td class="px-2 py-2">
+                    <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${badgeStyle}">${m.tipo}</span>
                 </td>
-                <td class="px-4 py-2.5 font-semibold text-slate-900">${prod.nombre} <span class="text-[10px] font-normal text-slate-400">(${prod.presentacion || ''})</span></td>
-                <td class="px-4 py-2.5 text-center font-bold text-slate-800">${m.cantidad}</td>
-                <td class="px-4 py-2.5 text-slate-600">${m.persona_contacto || 'ANÓNIMO'}</td>
-                <td class="px-4 py-2.5 text-slate-500 font-medium">${m.responsable || 'SISTEMA'}</td>
-                <td class="px-4 py-2.5 text-center">
-                    <button onclick="deleteMovement('${endpointType}', ${m.id}, '${m.codigo}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2 py-1 rounded-md transition inline-flex items-center justify-center">
-                        <i class="fa-solid fa-trash-can"></i>
+                <td class="px-3 py-2 font-semibold text-slate-900 max-w-[180px] truncate" title="${prod.nombre}">
+                    ${prod.nombre} <span class="text-[10px] font-normal text-slate-400 block">${prod.presentacion || ''}</span>
+                </td>
+                <td class="px-2 py-2 text-center font-bold text-slate-800">${m.cantidad}</td>
+                <td class="px-3 py-2 text-slate-600 max-w-[140px] truncate" title="${m.persona_contacto || 'ANÓNIMO'}">
+                    ${m.persona_contacto || 'ANÓNIMO'}
+                </td>
+                <td class="px-3 py-2 text-slate-500 max-w-[120px] truncate" title="${m.responsable || 'SISTEMA'}">
+                    ${m.responsable || 'SISTEMA'}
+                </td>
+                <td class="px-2 py-2 text-center">
+                    <button onclick="deleteMovement('${endpointType}', ${m.id}, '${m.codigo}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold p-1 rounded-md transition inline-flex items-center justify-center" title="Eliminar registro">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i>
                     </button>
                 </td>
             </tr>
